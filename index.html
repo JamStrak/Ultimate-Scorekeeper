@@ -172,7 +172,7 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const PURCHASE_LINK = "#", MASTER_KEY = "PEAK-DUEL-PRO-2024", PRO_TOKEN_KEY = 'superScorekeeper_v9_proToken', ARCHIVES_KEY = 'superScorekeeper_v9_archives', ACTIVE_SESSION_ID_KEY = 'superScorekeeper_v9_activeSessionId';
+        const PURCHASE_LINK = "https://mbd.pub/o/bread/YZWUlpxsaw==", MASTER_KEY = "PEAK-DUEL-PRO-2024", PRO_TOKEN_KEY = 'superScorekeeper_v9_proToken', ARCHIVES_KEY = 'superScorekeeper_v9_archives', ACTIVE_SESSION_ID_KEY = 'superScorekeeper_v9_activeSessionId';
         const generateDeviceFingerprint = () => btoa([navigator.userAgent, screen.width, screen.height, navigator.language, new Date().getTimezoneOffset()].join('||')), getProActivationToken = (key, fingerprint) => btoa(`v9.4-${key}-${fingerprint}`), isPro = () => localStorage.getItem(PRO_TOKEN_KEY) === getProActivationToken(MASTER_KEY, generateDeviceFingerprint());
 
         const playerListEl = document.getElementById('playerList'), addPlayerBtn = document.getElementById('addPlayerBtn'), removePlayerBtn = document.getElementById('removePlayerBtn'), playerCountDisp = document.getElementById('player-count-display'), teamUpBtn = document.getElementById('teamUpBtn'), newRoundBtn = document.getElementById('newRoundBtn'), deleteCurrentArchiveBtn = document.getElementById('deleteCurrentArchiveBtn'), statsBtn = document.getElementById('statsBtn'), toastContainer = document.getElementById('toast-container'), sessionManagerBtn = document.getElementById('sessionManagerBtn'), createNewSessionBtn = document.getElementById('createNewSessionBtn'), sessionListEl = document.getElementById('sessionList'), playerListOverlay = document.getElementById('playerListOverlay');
