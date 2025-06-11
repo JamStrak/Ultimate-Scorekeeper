@@ -1,11 +1,12 @@
-# Ultimate Scorekeeper
+![66122a62d32129409ccff86b0812c08](https://github.com/user-attachments/assets/1482efcb-dcf6-4b2b-8cb9-8688be58bafe)# Ultimate Scorekeeper
 
 A powerful, feature-rich, browser-based scoreboard designed for epic game nights with friends. Originally named '榜一战神生成器' (King of the Hill Generator), this tool helps you track scores, create random teams, and find out who is the true champion.
 
 All data is saved directly in your browser's local storage—no server or internet connection required after loading.
 
 
-*(This is an example screenshot. Don't forget to replace the link with a real screenshot of your application!)*
+*![66122a62d32129409ccff86b0812c08](https://github.com/user-attachments/assets/356b8efa-c656-421f-aecb-f08796237134)
+*
 
 ---
 
