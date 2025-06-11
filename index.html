@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>榜一战神生成器 v9.0 (旗舰版)</title>
+    <title>榜一战神生成器 v9.2 (终极兼容修复版)</title>
     <style>
         :root {
             --bg-color: #1a1a1a; --card-bg: #2c2c2c; --text-color: #eaeaea; --text-muted: #888;
@@ -37,8 +37,7 @@
         .btn:disabled { background-color: #222; color: var(--text-muted); border-color: #333; cursor: not-allowed; opacity: 0.6; }
         .btn.primary { background-color: var(--primary-gold); color: #1a1a1a; font-weight: 700; border-color: var(--primary-gold); }
         .btn.danger { background-color: transparent; color: var(--danger-button-bg); border-color: var(--danger-button-bg); }
-        .btn.danger:hover:not(:disabled) { background-color: rgba(183, 28, 28, 0.1); }
-        .btn.danger.confirm { background-color: var(--danger-button-bg); color: white; font-weight: bold; }
+        .btn.danger:hover:not(:disabled), .btn.danger-confirm { background-color: var(--danger-button-bg); color: white; border-color: var(--danger-button-bg); }
         .player-controls { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 8px; background: var(--card-bg); border-radius: var(--border-radius); margin-bottom: 15px; }
         #player-count-display { font-weight: 500; font-size: 16px; margin: 0 5px; }
         .secondary-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; }
@@ -92,7 +91,6 @@
         .settings-list li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .settings-list .setting-label { color: var(--text-muted); font-weight: bold; min-width: 70px; text-align: right;}
         .settings-list input[type="text"] { flex-grow: 1; background-color: #333; border: 1px solid var(--border-color); color: var(--text-color); padding: 10px; border-radius: 8px; font-size: 16px; }
-        .settings-list input[type="text"]:focus { border-color: var(--primary-gold); outline: none; box-shadow: 0 0 10px var(--primary-gold-glow); }
         .sound-setting .btn-small { padding: 4px 8px; font-size: 12px; border-radius: 6px; }
         .sound-setting .status-text { font-size: 13px; color: var(--text-muted); flex-basis: 100%; margin-left: 80px; }
         .session-list li { background-color: #333; padding: 10px 15px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -101,7 +99,7 @@
         .session-actions .btn-small { padding: 5px; font-size: 14px; background: none; border: none; color: var(--text-muted); }
         .session-actions .btn-small:hover { color: var(--primary-gold); }
         .session-actions .btn-small.delete:hover { color: var(--danger-color); }
-        .modal-footer { margin-top: 25px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .modal-footer { margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
         #toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background-color: var(--primary-gold); color: var(--bg-color); padding: 12px 25px; border-radius: 25px; z-index: 2000; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); opacity: 0; visibility: hidden; }
         #toast-container.show { visibility: visible; animation: toast-in-out 3s ease-in-out forwards; }
         .modal#upgradeModal .modal-content { text-align: center; }
@@ -118,246 +116,97 @@
         #helpModal .modal-content p, #helpModal .modal-content li { line-height: 1.8; color: var(--text-color); }
         #helpModal .modal-content ul { padding-left: 20px; margin-top: 10px;}
         #helpModal .modal-content b { color: var(--primary-gold); }
+        .text-input-field { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #333; color: var(--text-color); margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="title-container">
-            <button id="helpBtn" class="title-icon-btn" title="使用说明">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-            </button>
-            <h1>榜一战神生成器</h1>
-            <button id="sessionManagerBtn" class="title-icon-btn" title="存档管理器">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/></svg>
-            </button>
-        </div>
-        <div class="main-controls">
-            <button id="teamUpBtn" class="btn primary">随机组队</button>
-            <button id="newRoundBtn" class="btn">新一局</button>
-            <button id="statsBtn" class="btn">数据统计</button>
-        </div>
-        <div class="player-controls">
-            <button id="removePlayerBtn" class="btn">-</button>
-            <span id="player-count-display">4 位玩家</span>
-            <button id="addPlayerBtn" class="btn">+</button>
-        </div>
-        <div class="secondary-controls">
-            <div id="modeSwitchContainer" class="switch-container">
-                <span id="modeLabel" class="switch-label">组队模式</span>
-                <div id="modeSwitch" class="switch-btn active" title="切换计分模式"><div class="switch-btn-handle"></div></div>
-            </div>
-            <div id="repeatSwitchContainer" class="switch-container">
-                <span id="allowRepeatLabel" class="switch-label">避免重复</span>
-                <div id="allowRepeatSwitch" class="switch-btn" title="切换组队模式"><div class="switch-btn-handle"></div></div>
-            </div>
-            <button id="settingsBtn" class="btn">设置</button>
-        </div>
-        <div class="player-list-wrapper">
-            <div id="playerList" class="player-list"></div>
-            <div id="playerListOverlay" class="player-list-overlay">请点击 [随机组队] 开始</div>
-        </div>
+        <!-- Main UI -->
+        <div class="title-container"><button id="helpBtn" class="title-icon-btn" title="使用说明"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></button><h1>榜一战神生成器</h1><button id="sessionManagerBtn" class="title-icon-btn" title="存档管理器"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/></svg></button></div>
+        <div class="main-controls"><button id="teamUpBtn" class="btn primary">随机组队</button><button id="newRoundBtn" class="btn">新一局</button><button id="statsBtn" class="btn">数据统计</button></div>
+        <div class="player-controls"><button id="removePlayerBtn" class="btn">-</button><span id="player-count-display">4 位玩家</span><button id="addPlayerBtn" class="btn">+</button></div>
+        <div class="secondary-controls"><div id="modeSwitchContainer" class="switch-container"><span id="modeLabel" class="switch-label">组队模式</span><div id="modeSwitch" class="switch-btn active" title="切换计分模式"><div class="switch-btn-handle"></div></div></div><div id="repeatSwitchContainer" class="switch-container"><span id="allowRepeatLabel" class="switch-label">避免重复</span><div id="allowRepeatSwitch" class="switch-btn" title="切换组队模式"><div class="switch-btn-handle"></div></div></div><button id="settingsBtn" class="btn">设置</button></div>
+        <div class="player-list-wrapper"><div id="playerList" class="player-list"></div><div id="playerListOverlay" class="player-list-overlay">请点击 [随机组队] 开始</div></div>
     </div>
     
     <!-- Modals -->
-    <div id="statsModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">战局分析 <small id="statsModalArchiveName" style="color: var(--text-muted); font-weight: 400; font-size: 16px;"></small></h2><button class="modal-close">&times;</button></div><div id="generalStatsContainer"><h3 class="modal-section-title">综合数据</h3><ul class="stats-list" id="generalStatsList"></ul></div><div id="rankingsContainer"><h3 class="modal-section-title">积分排行榜 (历史战绩)</h3><ul class="stats-list rank-list" id="rankList"></ul></div><div id="teamStatsContainer"><h3 class="modal-section-title">CP组合分析</h3><ul class="stats-list" id="teamStatsList"></ul></div><div class="modal-footer"><button id="deleteCurrentArchiveBtn" class="btn danger">删除当前存档</button></div></div></div>
+    <div id="statsModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">战局分析 <small id="statsModalArchiveName" style="color: var(--text-muted); font-weight: 400; font-size: 16px;"></small></h2><button class="modal-close">&times;</button></div><div id="generalStatsContainer"><h3 class="modal-section-title">综合数据</h3><ul class="stats-list" id="generalStatsList"></ul></div><div id="rankingsContainer"><h3 class="modal-section-title">积分排行榜 (历史战绩)</h3><ul class="stats-list rank-list" id="rankList"></ul></div><div id="teamStatsContainer"><h3 class="modal-section-title">CP组合分析</h3><ul class="stats-list" id="teamStatsList"></ul></div><div class="modal-footer" style="justify-content: flex-start;"><button id="deleteCurrentArchiveBtn" class="btn danger">删除当前存档</button></div></div></div>
     <div id="settingsModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">设置</h2><button class="modal-close">&times;</button></div><div id="settingsContainer"><h3 class="modal-section-title">全局设置</h3><div class="switch-container" style="justify-content: space-between; padding: 10px; background: none;"><span class="switch-label" style="font-weight:bold; color: var(--text-color);">开启所有音效</span><div id="masterSoundSwitch" class="switch-btn"><div class="switch-btn-handle"></div></div></div><h3 class="modal-section-title">音效反馈 (可选)</h3><ul id="sound-settings-list" class="settings-list"></ul><h3 class="modal-section-title">自定义称号</h3><ul id="title-editor-list" class="settings-list"></ul></div><div class="activation-section"><h4 id="activation-title">专业版激活</h4><div id="activation-form"><input type="text" id="license-key-input" placeholder="在此输入您的许可证密钥"><button id="activate-btn" class="btn primary" style="width:100%; margin-top:10px;">激活</button></div><p id="activation-status">✅ 专业版已激活。所有数据将被永久保存。</p></div><div class="modal-footer"><button id="restoreDefaultsBtn" class="btn danger">恢复默认</button><button id="saveSettingsBtn" class="btn primary">保存</button></div></div></div>
     <div id="upgradeModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">🚀 升级到专业版</h2><button class="modal-close">&times;</button></div><p style="text-align: center; margin-top: 15px; font-size: 16px;">解锁全部潜能，永久保存您的辉煌战绩！</p><ul class="pro-feature-list"><li><b>多存档系统：</b>为不同游戏和朋友创建独立战绩</li><li><b>深度数据统计：</b>解锁战局分析与CP组合数据</li><li><b>完全个性化：</b>自定义玩家称号和操作音效</li><li>支持个人/团队双计分模式</li></ul><div class="modal-footer" style="flex-direction: column; align-items: center; gap: 15px;"><button id="goToPurchaseBtn" class="btn primary" style="width: 80%;">立即购买</button><a id="openActivationLink">已有密钥？点击此处激活</a></div></div></div>
-    <div id="sessionManagerModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">存档管理器</h2><button class="modal-close">&times;</button></div><ul id="sessionList" class="session-list"></ul><div class="modal-footer"><button id="createNewSessionBtn" class="btn primary" style="width: 100%;">创建新存档</button></div></div></div>
+    <div id="sessionManagerModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">存档管理器</h2><button class="modal-close">&times;</button></div><ul id="sessionList" class="session-list"></ul><div class="modal-footer" style="justify-content: center;"><button id="createNewSessionBtn" class="btn primary" style="width: 100%;">创建新存档</button></div></div></div>
     <div id="helpModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">使用说明</h2><button class="modal-close">&times;</button></div><div><h3 class="modal-section-title">基本操作</h3><p><b>玩家管理:</b> 使用 <b>+</b> / <b>-</b> 按钮增加或减少玩家数量 (2-8人)。<br><b>玩家改名:</b> 直接点击玩家名称即可进行编辑，完成后点击其他区域保存。</p><h3 class="modal-section-title">计分模式</h3><p><b>个人模式:</b> 每位玩家独立计分，通过玩家卡片右侧的 <b>+</b> / <b>-</b> 按钮进行加减分。<br><b>组队模式:</b> 这是核心玩法。流程如下：<ul><li><b>1. 随机组队:</b> 点击 <b>[随机组队]</b> 按钮，系统会将所有玩家随机分成两队。</li><li><b>2. 对局计分:</b> 任意给一方队员加分，则该队全体加分，另一队全体减分。</li><li><b>3. 记录本局:</b> 对局结束后，点击两队之间的 <b>[记录本局]</b> 按钮，记录胜负关系。</li></ul><b>小提示：</b>在一局计分后 (即分数发生变化后)，直接点击 <b>[随机组队]</b> 也会自动为您记录本局胜负，并直接开始新一轮组队。</p><h3 class="modal-section-title">高级功能</h3><p><b>新一局:</b> 点击 <b>[新一局]</b> 会清空所有玩家的当前分数，但保留历史胜负数据。</p><p><b>宿敌指定:</b> 点击玩家卡片最左侧的交叉剑图标，可将玩家设为“宿敌”。在组队时，宿敌会被优先分到不同队伍，增加对决的戏剧性！(最多指定2名)</p><h3 class="modal-section-title">专业版 (Pro) 特权</h3><p>升级到专业版后，以下高级功能将为您解锁：</p><ul><li><b>存档管理器:</b> (标题右侧文件夹图标) 您可以创建多个独立的存档，为不同的朋友、不同的游戏场景分别记录战绩，数据互不干扰。</li><li><b>深度数据统计:</b> (主界面按钮) 查看总局数、历史胜负排行榜和“CP组合分析”，全面掌握战局。</li><li><b>完全个性化:</b> (设置按钮) 自由编辑玩家的段位称号，并上传自定义的提示音效，打造专属计分器。</li></ul></div></div></div>
+    
+    <!-- ✨ NEW & REFACTORED: Reusable Modals for Compatibility ✨ -->
+    <div id="textInputModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="textInputTitle" class="modal-title">输入</h2><button class="modal-close">&times;</button></div><p id="textInputPrompt" style="margin-top: 15px; margin-bottom: 10px; color: var(--text-muted);"></p><input type="text" id="textInputField" class="text-input-field"><div class="modal-footer"><button id="textInputCancelBtn" class="btn">取消</button><button id="textInputConfirmBtn" class="btn primary">确认</button></div></div></div>
+    <div id="confirmModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="confirmModalTitle" class="modal-title">请确认</h2><button class="modal-close">&times;</button></div><p id="confirmModalText" style="margin: 20px 0; font-size: 16px; line-height: 1.6;"></p><div class="modal-footer"><button id="confirmModalCancelBtn" class="btn">取消</button><button id="confirmModalConfirmBtn" class="btn primary">确认</button></div></div></div>
+
     <div id="toast-container"></div>
     
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- 商业化配置 ---
-        const PURCHASE_LINK = "#"; // ⚠️ 1. 替换为您的面包多商品链接
-        const MASTER_KEY = "PEAK-DUEL-PRO-2024"; // ⚠️ 2. 您可以随时修改的主密钥
-        const PRO_TOKEN_KEY = 'superScorekeeper_v9_proToken';
-        const ARCHIVES_KEY = 'superScorekeeper_v9_archives'; 
-        const ACTIVE_SESSION_ID_KEY = 'superScorekeeper_v9_activeSessionId';
+        const PURCHASE_LINK = "#", MASTER_KEY = "PEAK-DUEL-PRO-2024", PRO_TOKEN_KEY = 'superScorekeeper_v9_proToken', ARCHIVES_KEY = 'superScorekeeper_v9_archives', ACTIVE_SESSION_ID_KEY = 'superScorekeeper_v9_activeSessionId';
+        const generateDeviceFingerprint = () => btoa([navigator.userAgent, screen.width, screen.height, navigator.language, new Date().getTimezoneOffset()].join('||')), getProActivationToken = (key, fingerprint) => btoa(`v9.2-${key}-${fingerprint}`), isPro = () => localStorage.getItem(PRO_TOKEN_KEY) === getProActivationToken(MASTER_KEY, generateDeviceFingerprint());
 
-        const generateDeviceFingerprint = () => btoa([navigator.userAgent, screen.width, screen.height, navigator.language, new Date().getTimezoneOffset()].join('||'));
-        const getProActivationToken = (key, fingerprint) => btoa(`v9.0-${key}-${fingerprint}`);
-        const isPro = () => localStorage.getItem(PRO_TOKEN_KEY) === getProActivationToken(MASTER_KEY, generateDeviceFingerprint());
-
-        // --- DOM元素 ---
         const playerListEl = document.getElementById('playerList'), addPlayerBtn = document.getElementById('addPlayerBtn'), removePlayerBtn = document.getElementById('removePlayerBtn'), playerCountDisp = document.getElementById('player-count-display'), teamUpBtn = document.getElementById('teamUpBtn'), newRoundBtn = document.getElementById('newRoundBtn'), deleteCurrentArchiveBtn = document.getElementById('deleteCurrentArchiveBtn'), statsBtn = document.getElementById('statsBtn'), toastContainer = document.getElementById('toast-container'), sessionManagerBtn = document.getElementById('sessionManagerBtn'), createNewSessionBtn = document.getElementById('createNewSessionBtn'), sessionListEl = document.getElementById('sessionList'), playerListOverlay = document.getElementById('playerListOverlay');
         const modeSwitch = document.getElementById('modeSwitch'), modeLabel = document.getElementById('modeLabel'), repeatSwitchContainer = document.getElementById('repeatSwitchContainer'), allowRepeatSwitch = document.getElementById('allowRepeatSwitch'), allowRepeatLabel = document.getElementById('allowRepeatLabel');
         const statsModal = document.getElementById('statsModal'), settingsModal = document.getElementById('settingsModal'), upgradeModal = document.getElementById('upgradeModal'), sessionManagerModal = document.getElementById('sessionManagerModal'), helpModal = document.getElementById('helpModal');
-        const settingsBtn = document.getElementById('settingsBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), restoreDefaultsBtn = document.getElementById('restoreDefaultsBtn'), titleEditorList = document.getElementById('title-editor-list'), soundSettingsList = document.getElementById('sound-settings-list');
-        const licenseKeyInput = document.getElementById('license-key-input'), activateBtn = document.getElementById('activate-btn'), activationForm = document.getElementById('activation-form'), activationStatus = document.getElementById('activation-status'), goToPurchaseBtn = document.getElementById('goToPurchaseBtn'), openActivationLink = document.getElementById('openActivationLink');
-        const helpBtn = document.getElementById('helpBtn');
-        const masterSoundSwitch = document.getElementById('masterSoundSwitch');
+        const textInputModal = document.getElementById('textInputModal'), textInputTitle = document.getElementById('textInputTitle'), textInputPrompt = document.getElementById('textInputPrompt'), textInputField = document.getElementById('textInputField'), textInputCancelBtn = document.getElementById('textInputCancelBtn'), textInputConfirmBtn = document.getElementById('textInputConfirmBtn');
+        const confirmModal = document.getElementById('confirmModal'), confirmModalTitle = document.getElementById('confirmModalTitle'), confirmModalText = document.getElementById('confirmModalText'), confirmModalCancelBtn = document.getElementById('confirmModalCancelBtn'), confirmModalConfirmBtn = document.getElementById('confirmModalConfirmBtn');
+        const settingsBtn = document.getElementById('settingsBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), restoreDefaultsBtn = document.getElementById('restoreDefaultsBtn'), titleEditorList = document.getElementById('title-editor-list'), soundSettingsList = document.getElementById('sound-settings-list'), masterSoundSwitch = document.getElementById('masterSoundSwitch');
+        const licenseKeyInput = document.getElementById('license-key-input'), activateBtn = document.getElementById('activate-btn'), activationForm = document.getElementById('activation-form'), activationStatus = document.getElementById('activation-status'), goToPurchaseBtn = document.getElementById('goToPurchaseBtn'), openActivationLink = document.getElementById('openActivationLink'), helpBtn = document.getElementById('helpBtn');
 
-        // --- 核心数据结构 (全局工作区) ---
-        let archives = {}, activeSessionId = null;
-        let players = [], teamHistory = [], totalRounds = 0, gameMode = 'team', allowRepeats = false, rankTitles = [], customSounds = {}, masterSoundEnabled = true;
-        let roundIsDirty = false, lastScoringTeam = null, lastTeamComposition = null, isConfirmingReset = false;
+        let archives = {}, activeSessionId = null, players = [], teamHistory = [], totalRounds = 0, gameMode = 'team', allowRepeats = false, rankTitles = [], customSounds = {}, masterSoundEnabled = true;
+        let roundIsDirty = false, lastScoringTeam = null, lastTeamComposition = null;
+        let textInputAction = null, confirmAction = null; // Callbacks for reusable modals
         
-        // --- 常量与模板 ---
-        const DEFAULT_RANK_TITLES = ['👑 榜一战神', '🥈 一方豪强', '🥉 中流砥柱', '江湖小虾', '初出茅庐', '潜力新星', '待展宏图', '不忘初心'];
-        const SOUND_EVENTS = { scoreUp: "加分反馈", teamUp: "组队反馈", record: "记录反馈" };
-        const NEMESIS_SVG = `<svg class="nemesis-icon-svg" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 9.5l-5 5M9.5 9.5l5 5"/><path d="M2.5 21.5l8-8"/><path d="M16 3l5 5"/><path d="M13.5 6.5l5 5"/><path d="M3 22l4-4"/><path d="M18 2l4 4"/></svg>`;
-        const RENAME_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
-        const DELETE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+        const DEFAULT_RANK_TITLES = ['👑 榜一战神', '🥈 一方豪强', '🥉 中流砥柱', '江湖小虾', '初出茅庐', '潜力新星', '待展宏图', '不忘初心'], SOUND_EVENTS = { scoreUp: "加分反馈", teamUp: "组队反馈", record: "记录反馈" };
+        const NEMESIS_SVG = `<svg class="nemesis-icon-svg" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 9.5l-5 5M9.5 9.5l5 5"/><path d="M2.5 21.5l8-8"/><path d="M16 3l5 5"/><path d="M13.5 6.5l5 5"/><path d="M3 22l4-4"/><path d="M18 2l4 4"/></svg>`, RENAME_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`, DELETE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
 
-        function initializeApp() {
-            if (isPro()) {
-                const savedArchives = localStorage.getItem(ARCHIVES_KEY);
-                archives = savedArchives ? JSON.parse(savedArchives) : {};
-                activeSessionId = localStorage.getItem(ACTIVE_SESSION_ID_KEY);
-                if (!activeSessionId || !archives[activeSessionId]) {
-                    const sessionIds = Object.keys(archives);
-                    activeSessionId = sessionIds.length > 0 ? sessionIds[0] : null;
-                }
-                if (!activeSessionId) { createSession(true); return; }
-            } else {
-                archives = {}; activeSessionId = 'free_session';
-                if (!archives[activeSessionId]) archives[activeSessionId] = getNewSessionData('免费体验存档');
-            }
-            loadSession(activeSessionId, false);
-            updateUIForProStatus();
-        }
-        
-        function loadSessionData(data) {
-            const freshData = JSON.parse(JSON.stringify(data));
-            players = freshData.players;
-            teamHistory = freshData.teamHistory;
-            totalRounds = freshData.totalRounds;
-            allowRepeats = freshData.allowRepeats;
-            gameMode = freshData.gameMode;
-            rankTitles = freshData.rankTitles;
-            customSounds = freshData.customSounds;
-            masterSoundEnabled = freshData.masterSoundEnabled;
-            roundIsDirty = false; lastScoringTeam = null; lastTeamComposition = null;
-        }
-
-        function getNewSessionData(name) {
-            const defaultPlayers = [];
-            for (let i = 0; i < 4; i++) {
-                defaultPlayers.push({ id: Date.now() + Math.random() + i, name: `玩家 ${i + 1}`, score: 0, wins: 0, losses: 0, team: null, isNemesis: false });
-            }
-            return { name: name, players: defaultPlayers, teamHistory: [], totalRounds: 0, allowRepeats: false, gameMode: 'team', rankTitles: [...DEFAULT_RANK_TITLES], customSounds: { scoreUp: null, teamUp: null, record: null }, masterSoundEnabled: true };
-        }
-
-        function saveData() { 
-            if (!isPro() || !activeSessionId) return; 
-            archives[activeSessionId] = { name: archives[activeSessionId].name, players, teamHistory, totalRounds, allowRepeats, gameMode, rankTitles, customSounds, masterSoundEnabled }; 
-            localStorage.setItem(ARCHIVES_KEY, JSON.stringify(archives)); 
-        }
-
+        function initializeApp() { if (isPro()) { const savedArchives = localStorage.getItem(ARCHIVES_KEY); archives = savedArchives ? JSON.parse(savedArchives) : {}; activeSessionId = localStorage.getItem(ACTIVE_SESSION_ID_KEY); if (!activeSessionId || !archives[activeSessionId]) { const sessionIds = Object.keys(archives); if (sessionIds.length > 0) activeSessionId = sessionIds[0]; else createInitialSession(); } } else { archives = {}; activeSessionId = 'free_session'; if (!archives[activeSessionId]) archives[activeSessionId] = getNewSessionData('免费体验存档'); } loadSession(activeSessionId, false); updateUIForProStatus(); }
+        function createInitialSession() { const newId = `session_${Date.now()}`; archives[newId] = getNewSessionData('默认存档'); activeSessionId = newId; saveData(); }
+        function loadSessionData(data) { const freshData = JSON.parse(JSON.stringify(data)); players = freshData.players; teamHistory = freshData.teamHistory; totalRounds = freshData.totalRounds; allowRepeats = freshData.allowRepeats; gameMode = freshData.gameMode; rankTitles = freshData.rankTitles; customSounds = freshData.customSounds; masterSoundEnabled = freshData.masterSoundEnabled; roundIsDirty = false; lastScoringTeam = null; lastTeamComposition = null; }
+        function getNewSessionData(name) { const defaultPlayers = Array.from({ length: 4 }, (_, i) => ({ id: Date.now() + Math.random() + i, name: `玩家 ${i + 1}`, score: 0, wins: 0, losses: 0, team: null, isNemesis: false })); return { name: name, players: defaultPlayers, teamHistory: [], totalRounds: 0, allowRepeats: false, gameMode: 'team', rankTitles: [...DEFAULT_RANK_TITLES], customSounds: { scoreUp: null, teamUp: null, record: null }, masterSoundEnabled: true }; }
+        function saveData() { if (!isPro() || !activeSessionId) return; archives[activeSessionId] = { name: archives[activeSessionId]?.name, players, teamHistory, totalRounds, allowRepeats, gameMode, rankTitles, customSounds, masterSoundEnabled }; localStorage.setItem(ARCHIVES_KEY, JSON.stringify(archives)); }
         function createPlayer(doSave = true) { if (players.length >= 8) return; players.push({ id: Date.now() + Math.random(), name: `玩家 ${players.length + 1}`, score: 0, wins: 0, losses: 0, team: null, isNemesis: false }); renderAll(doSave); }
         function removePlayer() { if (players.length <= 2) return; players.pop(); if (players.some(p => p.team)) smartClearTeams(false); renderAll(); }
-        
-        function renderAll(doSave = true) {
-            playerListEl.innerHTML = '';
-            const sortedForRanking = [...players].sort((a, b) => b.score - a.score);
-            const rankMap = new Map(sortedForRanking.map((p, i) => [p.id, i]));
-            const isAwaitingTeamUp = gameMode === 'team' && !players.some(p => p.team);
-            playerListOverlay.classList.toggle('visible', isAwaitingTeamUp);
-            
-            const renderQueue = gameMode === 'team' && players.some(p => p.team)
-                ? [...players.filter(p => p.team === 'A'), 'VS_SEPARATOR', ...players.filter(p => p.team === 'B')]
-                : [...players];
-
-            renderQueue.forEach(item => {
-                if (item === 'VS_SEPARATOR') { playerListEl.appendChild(createVsSeparator()); } 
-                else if(typeof item === 'object') {
-                    const playerCard = createPlayerCard(item, rankMap);
-                    if(isAwaitingTeamUp) playerCard.querySelectorAll('.score-btn').forEach(btn => btn.disabled = true);
-                    playerListEl.appendChild(playerCard);
-                }
-            });
-            updateControlsState(); 
-            if (doSave) saveData();
-        }
-
+        function renderAll(doSave = true) { playerListEl.innerHTML = ''; const sortedForRanking = [...players].sort((a, b) => b.score - a.score), rankMap = new Map(sortedForRanking.map((p, i) => [p.id, i])); const isAwaitingTeamUp = gameMode === 'team' && !players.some(p => p.team); playerListOverlay.classList.toggle('visible', isAwaitingTeamUp); const renderQueue = gameMode === 'team' && players.some(p => p.team) ? [...players.filter(p => p.team === 'A'), 'VS_SEPARATOR', ...players.filter(p => p.team === 'B')] : [...players]; renderQueue.forEach(item => { if (item === 'VS_SEPARATOR') { playerListEl.appendChild(createVsSeparator()); } else if(typeof item === 'object' && item.id) { const playerCard = createPlayerCard(item, rankMap); if(isAwaitingTeamUp) playerCard.querySelectorAll('.score-btn').forEach(btn => btn.disabled = true); playerListEl.appendChild(playerCard); } }); updateControlsState(); if (doSave) saveData(); }
         function createPlayerCard(player, rankMap) { const card = document.createElement('div'), rankIndex = rankMap.get(player.id), rankTitle = rankTitles[rankIndex] || rankTitles[rankTitles.length - 1]; card.className = 'player-card'; if (rankIndex === 0) card.classList.add('rank-1'); if (player.team) card.classList.add(`team-${player.team.toLowerCase()}`); card.dataset.playerId = player.id; card.innerHTML = `<div class="nemesis-icon ${player.isNemesis ? 'active' : ''}" data-action="toggle-nemesis" title="设为宿敌">${NEMESIS_SVG}</div><span class="player-rank-title">${rankTitle}</span><span class="player-name" contenteditable="true" spellcheck="false">${player.name}</span><div class="player-scoring"><button class="score-btn" data-action="minus">−</button><span class="player-score">${player.score}</span><button class="score-btn" data-action="plus">+</button></div>`; return card; }
         function createVsSeparator() { const container = document.createElement('div'); container.className = 'vs-separator-container'; const vsText = document.createElement('span'); vsText.className = 'vs-text'; vsText.textContent = 'VS'; const btn = document.createElement('button'); btn.id = 'dynamicRecordBtn'; btn.className = 'btn'; btn.textContent = '记录本局'; btn.disabled = !roundIsDirty; container.appendChild(vsText); container.appendChild(btn); return container; }
-        
-        function handleScoreChange(playerId, increment) {
-            const player = players.find(p => p.id === playerId); if (!player) return; let affectedPlayers = [];
-            if (gameMode === 'team' && player.team) { const scoringTeam = player.team; lastScoringTeam = scoringTeam; players.forEach(p => { if (p.team) { p.score += (p.team === scoringTeam ? increment : -increment); affectedPlayers.push(p.id); } }); } else { player.score += increment; affectedPlayers.push(player.id); }
-            roundIsDirty = true; if (increment > 0) playSound('scoreUp');
-            renderAll(); 
-            affectedPlayers.forEach(id => { const scoreElToPop = playerListEl.querySelector(`.player-card[data-player-id="${id}"] .player-score`); if (scoreElToPop) { scoreElToPop.classList.add('popping'); scoreElToPop.addEventListener('animationend', () => scoreElToPop.classList.remove('popping'), { once: true }); } });
-        }
+        function handleScoreChange(playerId, increment) { const player = players.find(p => p.id === playerId); if (!player) return; let affectedPlayers = []; if (gameMode === 'team' && player.team) { const scoringTeam = player.team; lastScoringTeam = scoringTeam; players.forEach(p => { if (p.team) { p.score += (p.team === scoringTeam ? increment : -increment); affectedPlayers.push(p.id); } }); } else { player.score += increment; affectedPlayers.push(player.id); } roundIsDirty = true; if (increment > 0) playSound('scoreUp'); renderAll(); affectedPlayers.forEach(id => { const scoreElToPop = playerListEl.querySelector(`.player-card[data-player-id="${id}"] .player-score`); if (scoreElToPop) { scoreElToPop.classList.add('popping'); scoreElToPop.addEventListener('animationend', () => scoreElToPop.classList.remove('popping'), { once: true }); } }); }
         function smartTeamUp() { setAnimationLock(true); if (players.some(p => p.team)) { if (roundIsDirty && lastScoringTeam) recordRound(true); } document.querySelectorAll('.player-name').forEach(el => el.classList.add('shaking')); playSound('teamUp'); setTimeout(() => { players.forEach(p => p.team = null); roundIsDirty = false; lastScoringTeam = null; const nemeses = players.filter(p => p.isNemesis), available = players.filter(p => !p.isNemesis); let teamA, teamB, teamA_ids; do { teamA = []; teamB = []; if (nemeses.length === 2) { teamA.push(nemeses[0]); teamB.push(nemeses[1]); } else if (nemeses.length === 1) { teamA.push(nemeses[0]); } let shuffled = available.sort(() => 0.5 - Math.random()); shuffled.forEach(p => (teamA.length < players.length / 2) ? teamA.push(p) : teamB.push(p)); if (Math.random() > 0.5) [teamA, teamB] = [teamB, teamA]; teamA_ids = teamA.map(p => p.id).sort(); } while (!allowRepeats && players.length > 2 && lastTeamComposition && JSON.stringify(teamA_ids) === JSON.stringify(lastTeamComposition)); lastTeamComposition = teamA_ids; players.forEach(p => { p.team = teamA.some(pl => pl.id === p.id) ? 'A' : (teamB.some(pl => pl.id === p.id) ? 'B' : null); }); renderAll(); setAnimationLock(false); }, 500); }
-        function recordRound(isAuto = false) { if (!roundIsDirty || !lastScoringTeam) return; const winningTeam = lastScoringTeam, losingTeam = winningTeam === 'A' ? 'B' : 'A'; const teamA_ids = players.filter(p => p.team === 'A').map(p => p.id).sort(); const teamB_ids = players.filter(p => p.team === 'B').map(p => p.id).sort(); if (teamA_ids.length > 0 && teamB_ids.length > 0) teamHistory.push([teamA_ids, teamB_ids].sort()); players.forEach(p => { if (p.team === winningTeam) p.wins++; else if (p.team === losingTeam) p.losses++; }); totalRounds++; roundIsDirty = false; lastScoringTeam = null; playSound('record'); showToast(isAuto ? '已自动记录本局' : '记录完成'); saveData(); updateControlsState(); }
+        function recordRound(isAuto = false) { if (!roundIsDirty || !lastScoringTeam) return; const winningTeam = lastScoringTeam, losingTeam = winningTeam === 'A' ? 'B' : 'A'; const teamA_ids = players.filter(p => p.team === 'A').map(p => p.id).sort(), teamB_ids = players.filter(p => p.team === 'B').map(p => p.id).sort(); if (teamA_ids.length > 0 && teamB_ids.length > 0) teamHistory.push([teamA_ids, teamB_ids].sort()); players.forEach(p => { if (p.team === winningTeam) p.wins++; else if (p.team === losingTeam) p.losses++; }); totalRounds++; roundIsDirty = false; lastScoringTeam = null; playSound('record'); showToast(isAuto ? '已自动记录本局' : '记录完成'); saveData(); updateControlsState(); }
 
         // --- Session Management ---
-        function createSession(isDefault = false) {
-            const name = isDefault ? '默认存档' : prompt('请输入新存档的名称:', `对局 ${new Date().toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`);
-            if (!name) return;
-            const newId = `session_${Date.now()}`;
-            archives[newId] = getNewSessionData(name);
-            activeSessionId = newId;
-            loadSession(newId, !isDefault); saveData();
-            if (!isDefault && sessionManagerModal.classList.contains('visible')) hideModal(sessionManagerModal);
-        }
+        function showCreateSessionModal() { showTextInputModal('创建新存档', '请输入新存档的名称：', `对局 ${new Date().toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, (name) => { const newId = `session_${Date.now()}`; archives[newId] = getNewSessionData(name); activeSessionId = newId; loadSession(newId, true); saveData(); hideModal(sessionManagerModal); }); }
+        function loadSession(id, showToastMsg = true) { if (!archives[id]) { initializeApp(); return; } activeSessionId = id; localStorage.setItem(ACTIVE_SESSION_ID_KEY, activeSessionId); loadSessionData(archives[id]); renderAll(false); if (showToastMsg) showToast(`已加载存档: ${archives[id].name}`); }
+        function renameSession(id) { showTextInputModal('重命名存档', '请输入新的存档名称：', archives[id].name, (newName) => { archives[id].name = newName; saveData(); renderSessionManager(); }); }
+        function deleteSession(idToDelete) { showConfirmModal('确认删除存档？', `此操作将永久删除存档 "${archives[idToDelete].name}"，无法撤销。`, () => { if (Object.keys(archives).length <= 1 && isPro()) { showToast('无法删除唯一的存档'); return; } const deletedName = archives[idToDelete].name, wasActive = idToDelete === activeSessionId; delete archives[idToDelete]; if (wasActive) { const remainingIds = Object.keys(archives); activeSessionId = remainingIds.length > 0 ? remainingIds[0] : null; if (activeSessionId) loadSession(activeSessionId, false); else initializeApp(); } saveData(); renderSessionManager(); showToast(`存档 "${deletedName}" 已删除`); if (statsModal.classList.contains('visible')) hideModal(statsModal); }, 'danger-confirm'); }
+        function renderSessionManager() { sessionListEl.innerHTML = ''; const sessionIds = Object.keys(archives); if (sessionIds.length === 0) { sessionListEl.innerHTML = '<li>暂无存档，请创建一个新存档。</li>'; return; } sessionIds.forEach(id => { const session = archives[id], li = document.createElement('li'); li.className = (id === activeSessionId) ? 'active-session' : ''; li.dataset.sessionId = id; li.innerHTML = `<span class="session-name">${session.name}</span><div class="session-actions"><button class="btn-small" data-action="rename" title="重命名">${RENAME_SVG}</button><button class="btn-small delete" data-action="delete" title="删除">${DELETE_SVG}</button></div>`; const nameSpan = li.querySelector('.session-name'); if (id !== activeSessionId) { nameSpan.style.cursor = 'pointer'; nameSpan.title = '点击加载此存档'; nameSpan.addEventListener('click', () => { loadSession(id); hideModal(sessionManagerModal); }); } sessionListEl.appendChild(li); }); }
 
-        function loadSession(id, showToastMsg = true) {
-            if (!archives[id]) { console.error(`Session with id ${id} not found.`); initializeApp(); return; }
-            activeSessionId = id;
-            localStorage.setItem(ACTIVE_SESSION_ID_KEY, activeSessionId);
-            loadSessionData(archives[id]);
-            renderAll(false);
-            if (showToastMsg) showToast(`已加载存档: ${archives[id].name}`);
-            if(sessionManagerModal.classList.contains('visible')) hideModal(sessionManagerModal);
-        }
-
-        function renameSession(id) { const newName = prompt('请输入新的存档名称:', archives[id].name); if (newName) { archives[id].name = newName; saveData(); renderSessionManager(); } }
-        
-        function deleteSession(idToDelete) {
-            if (Object.keys(archives).length <= 1 && isPro()) { showToast('无法删除唯一的存档'); return; }
-            if (confirm(`确认要永久删除存档 "${archives[idToDelete].name}" 吗？此操作无法撤销。`)) {
-                const deletedName = archives[idToDelete].name; const wasActive = idToDelete === activeSessionId; delete archives[idToDelete];
-                if (wasActive) {
-                    const remainingIds = Object.keys(archives); activeSessionId = remainingIds.length > 0 ? remainingIds[0] : null;
-                    if (activeSessionId) loadSession(activeSessionId)
-                    else { initializeApp(); }
-                }
-                saveData(); renderSessionManager(); showToast(`存档 "${deletedName}" 已删除`);
-            }
-        }
-
-        function renderSessionManager() {
-            sessionListEl.innerHTML = ''; const sessionIds = Object.keys(archives);
-            if (sessionIds.length === 0) { sessionListEl.innerHTML = '<li>暂无存档，请创建一个新存档。</li>'; return; }
-            sessionIds.forEach(id => {
-                const session = archives[id]; const li = document.createElement('li'); li.className = (id === activeSessionId) ? 'active-session' : ''; li.dataset.sessionId = id;
-                li.innerHTML = `<span class="session-name">${session.name}</span><div class="session-actions"><button class="btn-small" data-action="rename" title="重命名">${RENAME_SVG}</button><button class="btn-small delete" data-action="delete" title="删除">${DELETE_SVG}</button></div>`;
-                const nameSpan = li.querySelector('.session-name'); if (id !== activeSessionId) { nameSpan.style.cursor = 'pointer'; nameSpan.title = '点击加载此存档'; nameSpan.addEventListener('click', () => loadSession(id)); }
-                sessionListEl.appendChild(li);
-            });
-        }
-        function deleteCurrentArchive() { if (isConfirmingReset) { deleteSession(activeSessionId); hideModal(statsModal); } else { isConfirmingReset = true; deleteCurrentArchiveBtn.textContent = '确认删除?'; deleteCurrentArchiveBtn.classList.add('confirm'); setTimeout(resetClearButtonState, 3000); } }
-        
         // --- UI & State Updates ---
-        function updateControlsState() { const playerCount = players.length; playerCountDisp.textContent = `${playerCount} 位玩家`; addPlayerBtn.disabled = playerCount >= 8; removePlayerBtn.disabled = playerCount <= 2; const isTeamMode = gameMode === 'team'; teamUpBtn.disabled = !isTeamMode || playerCount < 2 || playerCount % 2 !== 0; repeatSwitchContainer.style.display = isTeamMode ? 'flex' : 'none'; const recordBtn = document.getElementById('dynamicRecordBtn'); if (recordBtn) recordBtn.disabled = !roundIsDirty; resetClearButtonState(); updateModeSwitchUI(); updateAllowRepeatSwitchUI(); }
+        function updateControlsState() { const playerCount = players.length; playerCountDisp.textContent = `${playerCount} 位玩家`; addPlayerBtn.disabled = playerCount >= 8; removePlayerBtn.disabled = playerCount <= 2; const isTeamMode = gameMode === 'team'; teamUpBtn.disabled = !isTeamMode || playerCount < 2 || (playerCount > 0 && playerCount % 2 !== 0); repeatSwitchContainer.style.display = isTeamMode ? 'flex' : 'none'; const recordBtn = document.getElementById('dynamicRecordBtn'); if (recordBtn) recordBtn.disabled = !roundIsDirty; updateModeSwitchUI(); updateAllowRepeatSwitchUI(); }
         function toggleMode() { gameMode = (gameMode === 'team' ? 'individual' : 'team'); smartClearTeams(false); saveData(); renderAll(); }
         function updateModeSwitchUI() { modeSwitch.classList.toggle('active', gameMode === 'team'); modeLabel.textContent = gameMode === 'team' ? '组队模式' : '个人模式'; }
         function toggleAllowRepeats() { allowRepeats = !allowRepeats; saveData(); updateAllowRepeatSwitchUI(); }
         function updateAllowRepeatSwitchUI() { allowRepeatSwitch.classList.toggle('active', allowRepeats); allowRepeatLabel.textContent = allowRepeats ? '允许重复' : '避免重复'; }
         function updateUIForProStatus() { const pro = isPro(); activationForm.style.display = pro ? 'none' : 'block'; activationStatus.style.display = pro ? 'block' : 'none'; sessionManagerBtn.classList.toggle('pro-feature', !pro); statsBtn.classList.toggle('pro-feature', !pro); settingsBtn.classList.toggle('pro-feature', !pro); deleteCurrentArchiveBtn.style.display = pro ? 'flex' : 'none'; }
-        function activatePro() { if (licenseKeyInput.value.trim() === MASTER_KEY) { localStorage.setItem(PRO_TOKEN_KEY, getProActivationToken(MASTER_KEY, generateDeviceFingerprint())); hideModal(settingsModal); showToast("专业版激活成功！", 'success'); initializeApp(); } else { showToast("激活码无效", 'error'); } }
-        function smartClearTeams(autoRecord = true) { if (autoRecord && roundIsDirty && lastScoringTeam) { recordRound(true); } players.forEach(p => p.team = null); roundIsDirty = false; lastScoringTeam = null; lastTeamComposition = null; renderAll(); }
-        function startNewRound() { if (confirm('确认要开始新一局吗？所有玩家的当前分数将被清零，但历史战绩会保留。')) { players.forEach(p => { p.score = 0; p.team = null; }); roundIsDirty = false; lastScoringTeam = null; lastTeamComposition = null; renderAll(); showToast("新的一局已开始！"); } }
-        function resetClearButtonState() { isConfirmingReset = false; deleteCurrentArchiveBtn.textContent = '删除当前存档'; deleteCurrentArchiveBtn.classList.remove('confirm'); }
+        function activatePro() { if (licenseKeyInput.value.trim() === MASTER_KEY) { localStorage.setItem(PRO_TOKEN_KEY, getProActivationToken(MASTER_KEY, generateDeviceFingerprint())); hideModal(settingsModal); showToast("专业版激活成功！"); initializeApp(); } else { showToast("激活码无效"); } }
+        function smartClearTeams(autoRecord = true) { if (autoRecord && roundIsDirty && lastScoringTeam) recordRound(true); players.forEach(p => p.team = null); roundIsDirty = false; lastScoringTeam = null; lastTeamComposition = null; renderAll(); }
+        function startNewRound() { showConfirmModal('开始新一局？', '所有玩家的当前分数将被清零，但历史战绩会保留。', () => { players.forEach(p => { p.score = 0; p.team = null; }); roundIsDirty = false; lastScoringTeam = null; lastTeamComposition = null; renderAll(); showToast("新的一局已开始！"); }); }
         function setAnimationLock(locked) { [teamUpBtn, newRoundBtn, allowRepeatSwitch, modeSwitch].forEach(btn => btn.disabled = locked); if (!locked) updateControlsState(); }
-        function playSound(type) { if (masterSoundEnabled && customSounds[type]) { new Audio(customSounds[type]).play().catch(e => {}); } }
+        function playSound(type) { if (masterSoundEnabled && customSounds[type]) { new Audio(customSounds[type]).play().catch(() => {}); } }
         function showToast(message) { toastContainer.textContent = message; toastContainer.classList.add('show'); setTimeout(() => toastContainer.classList.remove('show'), 2500); }
         
         function showModal(modal) { modal.classList.add('visible'); }
-        function hideModal(modal) { modal.classList.remove('visible'); if (modal === statsModal) resetClearButtonState(); }
-        
-        function renderStats() { 
-            document.getElementById('statsModalArchiveName').textContent = `- ${archives[activeSessionId].name}`;
-            document.getElementById('generalStatsList').innerHTML = `<li><span class="stat-name">总局数 (组队)</span><span class="stat-value">${totalRounds}</span></li>`; 
-            const rankList = document.getElementById('rankList'); rankList.innerHTML = ''; 
-            [...players].sort((a, b) => (b.wins - b.losses) - (a.wins - a.losses) || b.score - a.score).forEach((player, index) => { const li = document.createElement('li'); if (index === 0) li.classList.add('rank-1-item'); li.innerHTML = `<span class="rank-name">${index + 1}. ${player.name}</span><span class="rank-score">${player.wins}胜 ${player.losses}负</span>`; rankList.appendChild(li); }); 
-            const teamList = document.getElementById('teamStatsList'); teamList.innerHTML = ''; const pairCounts = {}; players.forEach((p1, i) => { for (let j = i + 1; j < players.length; j++) { const key = [p1.id, players[j].id].sort().join('-'); pairCounts[key] = 0; } }); teamHistory.forEach(teams => teams.forEach(team => { if(team.length > 1) { for(let i = 0; i < team.length; i++) for(let j = i + 1; j < team.length; j++) { const key = [team[i], team[j]].sort().join('-'); if (key in pairCounts) pairCounts[key]++; } } })); const sortedPairs = Object.entries(pairCounts).sort(([,a],[,b]) => b-a); if(sortedPairs.length === 0 || sortedPairs.every(p => p[1] === 0)) { teamList.innerHTML = '<li>暂无组队数据</li>'; return; } sortedPairs.forEach(([key, count]) => { if(count === 0) return; const ids = key.split('-').map(Number), p1 = players.find(p => p.id === ids[0]), p2 = players.find(p => p.id === ids[1]); if (!p1 || !p2) return; const percentage = totalRounds > 0 ? ((count / totalRounds) * 100).toFixed(0) : 0; const li = document.createElement('li'); li.innerHTML = `<span class="stat-name">${p1.name} & ${p2.name}</span><span class="stat-value">${count}次 (${percentage}%)</span>`; teamList.appendChild(li); }); 
-        }
+        function hideModal(modal) { modal.classList.remove('visible'); }
 
+        // --- Reusable Modal Logic ---
+        function showTextInputModal(title, prompt, initialValue, onConfirm) { textInputTitle.textContent = title; textInputPrompt.textContent = prompt; textInputField.value = initialValue; textInputAction = onConfirm; showModal(textInputModal); textInputField.focus(); textInputField.select(); }
+        function handleTextInputConfirm() { const value = textInputField.value.trim(); if (value && typeof textInputAction === 'function') { textInputAction(value); } else if (!value) { showToast("输入内容不能为空！"); return; } hideModal(textInputModal); textInputAction = null; }
+        function showConfirmModal(title, text, onConfirm, confirmClass = 'primary') { confirmModalTitle.textContent = title; confirmModalText.innerHTML = text; confirmAction = onConfirm; confirmModalConfirmBtn.className = `btn ${confirmClass}`; showModal(confirmModal); }
+        function handleConfirm() { if (typeof confirmAction === 'function') confirmAction(); hideModal(confirmModal); confirmAction = null; }
+
+        function renderStats() { document.getElementById('statsModalArchiveName').textContent = `- ${archives[activeSessionId].name}`; document.getElementById('generalStatsList').innerHTML = `<li><span class="stat-name">总局数 (组队)</span><span class="stat-value">${totalRounds}</span></li>`; const rankList = document.getElementById('rankList'); rankList.innerHTML = ''; [...players].sort((a, b) => (b.wins - b.losses) - (a.wins - a.losses) || b.score - a.score).forEach((player, index) => { const li = document.createElement('li'); if (index === 0) li.classList.add('rank-1-item'); li.innerHTML = `<span class="rank-name">${index + 1}. ${player.name}</span><span class="rank-score">${player.wins}胜 ${player.losses}负</span>`; rankList.appendChild(li); }); const teamList = document.getElementById('teamStatsList'); teamList.innerHTML = ''; const pairCounts = {}; players.forEach((p1, i) => { for (let j = i + 1; j < players.length; j++) { const key = [p1.id, players[j].id].sort().join('-'); pairCounts[key] = 0; } }); teamHistory.forEach(teams => teams.forEach(team => { if(team.length > 1) { for(let i = 0; i < team.length; i++) for(let j = i + 1; j < team.length; j++) { const key = [team[i], team[j]].sort().join('-'); if (key in pairCounts) pairCounts[key]++; } } })); const sortedPairs = Object.entries(pairCounts).sort(([,a],[,b]) => b-a); if(sortedPairs.length === 0 || sortedPairs.every(p => p[1] === 0)) { teamList.innerHTML = '<li>暂无组队数据</li>'; return; } sortedPairs.forEach(([key, count]) => { if(count === 0) return; const ids = key.split('-').map(Number), p1 = players.find(p => p.id === ids[0]), p2 = players.find(p => p.id === ids[1]); if (!p1 || !p2) return; const percentage = totalRounds > 0 ? ((count / totalRounds) * 100).toFixed(0) : 0; const li = document.createElement('li'); li.innerHTML = `<span class="stat-name">${p1.name} & ${p2.name}</span><span class="stat-value">${count}次 (${percentage}%)</span>`; teamList.appendChild(li); }); }
         function showSettingsModal() { titleEditorList.innerHTML = ''; rankTitles.forEach((title, index) => { titleEditorList.innerHTML += `<li><span class="setting-label">第 ${index + 1} 名</span><input type="text" value="${title}" data-index="${index}"></li>`; }); soundSettingsList.innerHTML = ''; for (const type in SOUND_EVENTS) { const status = customSounds[type] ? '已设置' : '未设置'; soundSettingsList.innerHTML += `<li class="sound-setting" data-sound-type="${type}"><span class="setting-label">${SOUND_EVENTS[type]}</span><label class="btn btn-small">上传<input type="file" accept=".mp3,.wav,.m4a" style="display:none;"></label><button class="btn btn-small" data-action="play">试听</button><button class="btn btn-small danger" data-action="clear">清除</button><span class="status-text">${status}</span></li>`; } updateMasterSoundSwitchUI(); settingsModal.classList.add('visible'); }
         function saveSettings() { titleEditorList.querySelectorAll('input').forEach(input => { rankTitles[parseInt(input.dataset.index)] = input.value.trim() || DEFAULT_RANK_TITLES[parseInt(input.dataset.index)]; }); saveData(); renderAll(false); hideModal(settingsModal); showToast('设置已保存'); }
         function restoreDefaults() { rankTitles = [...DEFAULT_RANK_TITLES]; customSounds = { scoreUp: null, teamUp: null, record: null }; masterSoundEnabled = true; saveData(); showSettingsModal(); }
@@ -366,21 +215,25 @@
         function updateMasterSoundSwitchUI() { masterSoundSwitch.classList.toggle('active', masterSoundEnabled); }
 
         // --- Event Listeners ---
-        addPlayerBtn.addEventListener('click', () => createPlayer()); removePlayerBtn.addEventListener('click', removePlayer);
-        teamUpBtn.addEventListener('click', smartTeamUp); modeSwitch.addEventListener('click', toggleMode); allowRepeatSwitch.addEventListener('click', toggleAllowRepeats); newRoundBtn.addEventListener('click', startNewRound);
-        statsBtn.addEventListener('click', () => { if (isPro()) { renderStats(); showModal(statsModal); } else { showModal(upgradeModal); } });
-        deleteCurrentArchiveBtn.addEventListener('click', deleteCurrentArchive);
+        addPlayerBtn.addEventListener('click', () => createPlayer()); removePlayerBtn.addEventListener('click', removePlayer); teamUpBtn.addEventListener('click', smartTeamUp); modeSwitch.addEventListener('click', toggleMode); allowRepeatSwitch.addEventListener('click', toggleAllowRepeats); newRoundBtn.addEventListener('click', startNewRound);
+        statsBtn.addEventListener('click', () => isPro() ? (renderStats(), showModal(statsModal)) : showModal(upgradeModal));
+        deleteCurrentArchiveBtn.addEventListener('click', () => deleteSession(activeSessionId));
         settingsBtn.addEventListener('click', () => isPro() ? showSettingsModal() : showModal(upgradeModal));
         helpBtn.addEventListener('click', () => showModal(helpModal));
-        sessionManagerBtn.addEventListener('click', () => isPro() ? (renderSessionManager(), showModal(sessionManagerModal)) : showModal(upgradeModal)); createNewSessionBtn.addEventListener('click', () => createSession(false));
+        sessionManagerBtn.addEventListener('click', () => isPro() ? (renderSessionManager(), showModal(sessionManagerModal)) : showModal(upgradeModal));
+        createNewSessionBtn.addEventListener('click', showCreateSessionModal);
         sessionListEl.addEventListener('click', e => { const btn = e.target.closest('button'); if (!btn) return; const action = btn.dataset.action, sessionId = btn.closest('li').dataset.sessionId; if (action === 'rename') renameSession(sessionId); else if (action === 'delete') deleteSession(sessionId); });
-        [statsModal, settingsModal, upgradeModal, sessionManagerModal, helpModal].forEach(modal => { modal.addEventListener('click', (e) => { if (e.target === modal) hideModal(modal); }); modal.querySelector('.modal-close').addEventListener('click', () => hideModal(modal)); });
-        saveSettingsBtn.addEventListener('click', saveSettings); restoreDefaultsBtn.addEventListener('click', restoreDefaults);
-        masterSoundSwitch.addEventListener('click', toggleMasterSound);
-        soundSettingsList.addEventListener('change', (e) => { if (e.target.type === 'file') handleSoundUpload(e); });
-        soundSettingsList.addEventListener('click', (e) => { const target = e.target.closest('button'); if (!target) return; const type = target.closest('li').dataset.soundType; if (target.dataset.action === 'play') playSound(type); if (target.dataset.action === 'clear') { customSounds[type] = null; saveData(); target.closest('li').querySelector('.status-text').textContent = '未设置'; } });
-        playerListEl.addEventListener('click', (e) => { const actionTarget = e.target.closest('[data-action]'); if (e.target.id === 'dynamicRecordBtn') { recordRound(); return; } if (!actionTarget) return; const card = e.target.closest('.player-card'), playerId = parseFloat(card.dataset.playerId), action = actionTarget.dataset.action; if (action === 'toggle-nemesis') { const player = players.find(p => p.id === playerId); if (!player.isNemesis && players.filter(p => p.isNemesis).length >= 2) { showToast('最多只能指定两名宿敌！'); return; } player.isNemesis = !player.isNemesis; renderAll(); } else if (action === 'plus' || action === 'minus') { handleScoreChange(playerId, action === 'plus' ? 1 : -1); } });
-        playerListEl.addEventListener('blur', (e) => { if (e.target.classList.contains('player-name')) { const card = e.target.closest('.player-card'), playerId = parseFloat(card.dataset.playerId), player = players.find(p => p.id === playerId), newName = e.target.textContent.trim(); if (player && newName && player.name !== newName) { player.name = newName; saveData(); } else if (!newName) { e.target.textContent = player.name; } } }, true);
+        
+        // Modal general listeners
+        [statsModal, settingsModal, upgradeModal, sessionManagerModal, helpModal, textInputModal, confirmModal].forEach(modal => { modal.addEventListener('click', e => { if (e.target === modal) hideModal(modal); }); modal.querySelector('.modal-close').addEventListener('click', () => hideModal(modal)); });
+        textInputConfirmBtn.addEventListener('click', handleTextInputConfirm); textInputField.addEventListener('keydown', e => { if (e.key === 'Enter') handleTextInputConfirm(); }); textInputCancelBtn.addEventListener('click', () => hideModal(textInputModal));
+        confirmModalConfirmBtn.addEventListener('click', handleConfirm); confirmModalCancelBtn.addEventListener('click', () => hideModal(confirmModal));
+        
+        saveSettingsBtn.addEventListener('click', saveSettings); restoreDefaultsBtn.addEventListener('click', restoreDefaults); masterSoundSwitch.addEventListener('click', toggleMasterSound);
+        soundSettingsList.addEventListener('change', e => { if (e.target.type === 'file') handleSoundUpload(e); });
+        soundSettingsList.addEventListener('click', e => { const target = e.target.closest('button'); if (!target) return; const type = target.closest('li').dataset.soundType; if (target.dataset.action === 'play') playSound(type); if (target.dataset.action === 'clear') { customSounds[type] = null; saveData(); target.closest('li').querySelector('.status-text').textContent = '未设置'; } });
+        playerListEl.addEventListener('click', e => { const actionTarget = e.target.closest('[data-action]'); if (e.target.id === 'dynamicRecordBtn') { recordRound(); return; } if (!actionTarget) return; const card = e.target.closest('.player-card'), playerId = parseFloat(card.dataset.playerId), action = actionTarget.dataset.action; if (action === 'toggle-nemesis') { const player = players.find(p => p.id === playerId); if (!player.isNemesis && players.filter(p => p.isNemesis).length >= 2) { showToast('最多只能指定两名宿敌！'); return; } player.isNemesis = !player.isNemesis; renderAll(); } else if (action === 'plus' || action === 'minus') { handleScoreChange(playerId, action === 'plus' ? 1 : -1); } });
+        playerListEl.addEventListener('blur', e => { if (e.target.classList.contains('player-name')) { const card = e.target.closest('.player-card'), playerId = parseFloat(card.dataset.playerId), player = players.find(p => p.id === playerId), newName = e.target.textContent.trim(); if (player && newName && player.name !== newName) { player.name = newName; saveData(); } else if (!newName) { e.target.textContent = player.name; } } }, true);
         activateBtn.addEventListener('click', activatePro); goToPurchaseBtn.addEventListener('click', () => window.open(PURCHASE_LINK, '_blank')); openActivationLink.addEventListener('click', () => { hideModal(upgradeModal); showModal(settingsModal); });
         
         initializeApp();
