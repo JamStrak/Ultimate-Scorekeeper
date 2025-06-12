@@ -318,7 +318,7 @@
             padding-bottom: 6px; border-bottom: 2px solid var(--primary-gold); 
         }
 
-        /* 8. 记一笔页面优化 - 紧凑布局 */
+        /* 8 & 9. 记一笔页面优化 - 包含新的负号按钮 */
         #cardScoreModal .modal-content { 
             width: 95%; max-width: 380px; max-height: 85vh; padding: 15px;
         }
@@ -336,8 +336,34 @@
             font-weight: bold; font-size: 15px; color: var(--text-color);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
+        .score-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .sign-toggle-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background-color: #444;
+            color: var(--text-muted);
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .sign-toggle-btn.active {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+            color: white;
+        }
         #cardScoreList input[type="number"] { 
-            width: 120px; background-color: #444; border: 1px solid var(--border-color); 
+            width: 100px; background-color: #444; border: 1px solid var(--border-color); 
             color: var(--text-color); padding: 10px; border-radius: 6px; 
             font-size: 16px; text-align: center;
         }
@@ -355,6 +381,7 @@
             background: rgba(255,255,255,0.03); border-radius: 8px;
         }
         #cardScoreSum.unbalanced { color: var(--danger-color); }
+
 
         /* 4. 统计页面模式切换 */
         .stats-controls { 
@@ -924,7 +951,7 @@
         let rankTitles = [];
         let gameSessions = [];
         let viewMode = 'duel';
-        let statsViewMode = 'duel'; // 新增：用于统计视图的模式
+        let statsViewMode = 'duel'; 
         let zeroSumCheckEnabled = true;
         let zeroSumDuelEnabled = true;
         let cardScoreRounds = 0;
@@ -948,7 +975,6 @@
         const DELETE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
         const RENAME_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
         
-        // --- Core Logic (largely unchanged) ---
         function loadGlobalSettings() {
             const saved = localStorage.getItem(GLOBAL_SETTINGS_KEY);
             if (saved) {
@@ -1043,7 +1069,6 @@
             renderAll();
         }
         
-        // --- Main Render Function (Updated) ---
         function renderAll(doSave = true) {
             updateMainControls();
             playerListEl.innerHTML = '';
@@ -1070,7 +1095,6 @@
             if (doSave) saveData();
         }
 
-        // --- UI Element Creation (Unchanged) ---
         function createPlayerCard(player, rankMap, cardModeRank) {
             const card = document.createElement('div');
             card.className = 'player-card';
@@ -1129,7 +1153,6 @@
             return container;
         }
 
-        // --- Game Logic (Largely unchanged) ---
         function handleScoreChange(playerId, increment) {
             const player = players.find(p => p.id === playerId);
             if (!player) return;
@@ -1209,15 +1232,20 @@
             updateControlsState();
         }
 
-        // --- Card Game Mode Logic (Updated) ---
+        // --- Card Game Mode Logic (Updated for Sign Toggle) ---
         function showCardScoreModal() {
             cardScoreList.innerHTML = '';
             players.forEach(player => {
                 const li = document.createElement('li');
-                // 8. 修复负数输入问题
+                // 9. 使用带负号切换按钮的新布局
                 li.innerHTML = `
                     <span class="player-name-static">${player.name}</span>
-                    <input type="number" class="card-score-input" data-player-id="${player.id}" placeholder="得分" value="" inputmode="decimal">
+                    <div class="score-input-wrapper">
+                        <button class="sign-toggle-btn" data-player-id="${player.id}">-</button>
+                        <input type="number" class="card-score-input" data-player-id="${player.id}" 
+                               placeholder="得分" value="" inputmode="numeric" 
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </div>
                 `;
                 cardScoreList.appendChild(li);
             });
@@ -1230,7 +1258,12 @@
         function updateCardScoreSum() {
             const inputs = cardScoreList.querySelectorAll('.card-score-input');
             let sum = 0;
-            inputs.forEach(input => { sum += Number(input.value) || 0; });
+            inputs.forEach(input => {
+                const rawValue = Number(input.value) || 0;
+                const signBtn = cardScoreList.querySelector(`.sign-toggle-btn[data-player-id="${input.dataset.playerId}"]`);
+                const finalValue = (signBtn && signBtn.classList.contains('active')) ? -rawValue : rawValue;
+                sum += finalValue;
+            });
             cardScoreSum.textContent = `总和: ${sum}`;
             cardScoreSum.classList.toggle('unbalanced', zeroSumCheckEnabled && sum !== 0);
             cardScoreConfirmBtn.disabled = zeroSumCheckEnabled && sum !== 0;
@@ -1240,8 +1273,11 @@
             let hasChanges = false;
             inputs.forEach(input => {
                 const playerId = parseFloat(input.dataset.playerId);
-                const scoreChange = Number(input.value) || 0;
-                if (scoreChange !== 0) {
+                const rawValue = Number(input.value) || 0;
+                if (rawValue !== 0) {
+                    const signBtn = cardScoreList.querySelector(`.sign-toggle-btn[data-player-id="${input.dataset.playerId}"]`);
+                    const scoreChange = (signBtn && signBtn.classList.contains('active')) ? -rawValue : rawValue;
+                    
                     const player = players.find(p => p.id === playerId);
                     if (player) {
                         player.score += scoreChange;
@@ -1269,7 +1305,6 @@
         }
         function updateZeroSumDuelSwitchUI() { zeroSumDuelSwitch.classList.toggle('active', zeroSumDuelEnabled); }
 
-        // --- Player History (Unchanged) ---
         function showPlayerHistoryModal() { renderPlayerHistoryList(); showModal(playerHistoryModal); }
         function renderPlayerHistoryList() {
             playerHistoryList.innerHTML = '';
@@ -1334,7 +1369,6 @@
             currentSelectingPlayerId = null;
         }
 
-        // --- Session Management (Unchanged) ---
         function showCreateSessionModal() {
             showTextInputModal('创建新存档', '请输入新存档的名称：', `对局 ${new Date().toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, (name) => {
                 const newId = `session_${Date.now()}`;
@@ -1400,7 +1434,6 @@
             });
         }
 
-        // --- UI & State Updates (Heavily Updated) ---
         function updateMainControls() {
             if (viewMode === 'duel') {
                 mainActionBtn.textContent = '随机组队';
@@ -1437,7 +1470,6 @@
             });
             modeDropdown.querySelector('[data-mode="card"]').classList.toggle('pro-feature', !isPro());
             
-            // Stats mode selector UI
             statsModeSelectorBtn.innerHTML = statsViewMode === 'duel' ? '查看：对决数据' : '查看：牌局数据';
             statsModeDropdown.querySelectorAll('.mode-dropdown-item').forEach(item => {
                 item.classList.toggle('active', item.dataset.mode === statsViewMode);
@@ -1504,7 +1536,6 @@
             if (!locked) updateControlsState();
         }
 
-        // --- Generic Functions (Unchanged) ---
         function playSound(type) { if (globalSettings.masterSoundEnabled && globalSettings.customSounds[type]) { new Audio(globalSettings.customSounds[type]).play().catch(() => {}); } }
         function showToast(message) { toastContainer.textContent = message; toastContainer.classList.add('show'); setTimeout(() => toastContainer.classList.remove('show'), 2500); }
         function showModal(modal) { modal.classList.add('visible'); }
@@ -1528,7 +1559,6 @@
         }
         function handleConfirm() { if (typeof confirmAction === 'function') confirmAction(); hideModal(confirmModal); confirmAction = null; }
 
-        // --- Stats Logic (Heavily Updated for Mode Filtering) ---
         function showStatsModal() {
             gameSessionView.style.display = 'block';
             comprehensiveStatsView.style.display = 'none';
@@ -1584,7 +1614,6 @@
                 rankList.appendChild(li);
             });
 
-            // Always calculate team stats but only show for duel mode
             const teamList = document.getElementById(`${prefix}teamStatsList`);
             teamList.innerHTML = '';
             if (statTotalRounds > 0 && statTeamHistory.length > 0) {
@@ -1648,7 +1677,6 @@
             comprehensiveStatsView.style.display = 'block';
         }
         
-        // --- Settings Logic ---
         function showSettingsModal() {
             titleEditorList.innerHTML = '';
             rankTitles.forEach((title, index) => {
@@ -1753,7 +1781,20 @@
         
         cardScoreConfirmBtn.addEventListener('click', handleCardScoreConfirm);
         cardScoreCancelBtn.addEventListener('click', () => hideModal(cardScoreModal));
-        cardScoreList.addEventListener('input', e => { if (e.target.classList.contains('card-score-input')) updateCardScoreSum(); });
+        
+        // 更新: 为cardScoreList添加一个更通用的事件监听器
+        cardScoreList.addEventListener('input', e => { 
+            if (e.target.classList.contains('card-score-input')) {
+                updateCardScoreSum(); 
+            }
+        });
+        cardScoreList.addEventListener('click', e => {
+            if (e.target.classList.contains('sign-toggle-btn')) {
+                e.target.classList.toggle('active');
+                updateCardScoreSum(); // 切换符号后立即更新总和
+            }
+        });
+
         zeroSumSwitch.addEventListener('click', toggleZeroSumCheck);
 
         playerHistoryList.addEventListener('click', e => {
@@ -1819,7 +1860,6 @@
             }
         });
         
-        // 6. 换人按钮条件显示逻辑
         playerListEl.addEventListener('focusin', e => {
             if (e.target.classList.contains('player-name')) {
                 e.target.closest('.player-name-container').classList.add('focused');
@@ -1827,7 +1867,7 @@
         });
         playerListEl.addEventListener('focusout', e => {
             if (e.target.classList.contains('player-name')) {
-                 setTimeout(() => { // 加一个短暂延迟，避免点击换人按钮时立即隐藏
+                 setTimeout(() => { 
                     e.target.closest('.player-name-container').classList.remove('focused');
                  }, 150);
             }
