@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>榜一战神生成器 v9.4 (积分排行榜优化版)</title>
+    <title>谁是榜一 - 超级计分器 v9.8</title>
     <style>
         :root {
             --bg-color: #1a1a1a; --card-bg: #2c2c2c; --text-color: #eaeaea; --text-muted: #888;
             --primary-gold: #D4AF37; --primary-gold-glow: rgba(212, 175, 55, 0.3); --danger-color: #e57373;
             --danger-button-bg: #B71C1C; --success-color: #4CAF50; --team-a-color: var(--primary-gold);
             --team-a-bg: rgba(212, 175, 55, 0.1); --team-b-color: #26A69A; --team-b-bg: rgba(38, 166, 154, 0.1);
-            --border-color: #444; --border-radius: 12px; --shadow: 0 4px 15px rgba(0, 0, 0, 0.2); --transition-speed: 0.3s;
+            --border-color: #444; --border-radius: 10px; --shadow: 0 2px 12px rgba(0, 0, 0, 0.2); --transition-speed: 0.3s;
         }
+
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         @keyframes score-pop { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
@@ -20,256 +21,1848 @@
 
         *, *::before, *::after { box-sizing: border-box; }
         html { -webkit-text-size-adjust: 100%; }
-        body { font-family: 'Noto Sans SC', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; -webkit-tap-highlight-color: transparent; overflow-x: hidden; min-height: 100vh; display: flex; justify-content: center; touch-action: manipulation; }
+        body { 
+            font-family: 'Noto Sans SC', sans-serif; background-color: var(--bg-color); color: var(--text-color); 
+            margin: 0; padding: 12px; -webkit-tap-highlight-color: transparent; overflow-x: hidden; 
+            min-height: 100vh; display: flex; justify-content: center; touch-action: manipulation; 
+        }
         .container { width: 100%; max-width: 600px; animation: fadeIn 0.5s ease-out; }
-        .title-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 20px; position: relative; }
-        h1 { color: var(--primary-gold); margin: 0; font-size: clamp(24px, 6vw, 28px); font-weight: 700; letter-spacing: 2px; text-shadow: 0 0 10px var(--primary-gold-glow); }
-        .title-icon-btn { background: none; border: none; padding: 5px; cursor: pointer; color: var(--text-muted); transition: color 0.3s; position: absolute; top: 50%; transform: translateY(-50%); }
+        
+        .title-container { 
+            display: flex; justify-content: center; align-items: center; gap: 8px; 
+            margin-bottom: 15px; position: relative; 
+        }
+        h1 { 
+            color: var(--primary-gold); margin: 0; font-size: clamp(20px, 5.5vw, 24px); 
+            font-weight: 700; letter-spacing: 1px; text-shadow: 0 0 8px var(--primary-gold-glow); 
+        }
+        .title-icon-btn { 
+            background: none; border: none; padding: 4px; cursor: pointer; 
+            color: var(--text-muted); transition: color 0.3s; position: absolute; 
+            top: 50%; transform: translateY(-50%); 
+        }
         .title-icon-btn:hover { color: var(--primary-gold); }
-        .title-icon-btn svg { width: 24px; height: 24px; }
+        .title-icon-btn svg { width: 20px; height: 20px; }
         #sessionManagerBtn { right: 0; }
         #helpBtn { left: 0; }
-        .pro-feature::after { content: 'Pro'; position: absolute; top: 0; right: 0; background: var(--primary-gold); color: black; font-size: 8px; padding: 1px 3px; border-radius: 4px; font-weight: bold; }
-        .main-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .btn { padding: 12px 15px; font-size: 15px; font-weight: 500; border: 1px solid var(--border-color); border-radius: var(--border-radius); cursor: pointer; transition: all var(--transition-speed) ease; background-color: var(--card-bg); color: var(--text-color); display: flex; justify-content: center; align-items: center; gap: 8px; text-align: center; position: relative; }
+        .pro-feature::after { 
+            content: 'Pro'; position: absolute; top: -2px; right: -2px; 
+            background: var(--primary-gold); color: black; font-size: 8px; 
+            padding: 1px 3px; border-radius: 3px; font-weight: bold; 
+        }
+
+        /* 顶部控制区域整合 */
+        .top-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        /* 1. 模式选择器优化 - 下拉菜单 */
+        .mode-selector {
+            position: relative;
+            flex-shrink: 0;
+        }
+        .mode-selector .btn {
+            min-width: 120px;
+        }
+        .mode-selector .btn::after {
+            content: ' ▼';
+            font-size: 10px;
+            margin-left: 4px;
+        }
+        .mode-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            z-index: 100;
+            overflow: hidden;
+            margin-top: 4px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all var(--transition-speed) ease;
+        }
+        .mode-dropdown.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .mode-dropdown-item {
+            padding: 10px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mode-dropdown-item:hover {
+            background-color: #383838;
+        }
+        .mode-dropdown-item.active {
+            font-weight: bold;
+            color: var(--primary-gold);
+        }
+
+        /* 2. 数据统计按钮位置 */
+        .top-controls #statsBtn {
+            flex-grow: 1; /* 占据剩余空间 */
+        }
+        
+        .main-controls { 
+            display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; 
+        }
+        .btn { 
+            padding: 10px 12px; font-size: 14px; font-weight: 500; border: 1px solid var(--border-color); 
+            border-radius: var(--border-radius); cursor: pointer; transition: all var(--transition-speed) ease; 
+            background-color: var(--card-bg); color: var(--text-color); display: flex; 
+            justify-content: center; align-items: center; gap: 6px; text-align: center; position: relative; 
+        }
         .btn:hover:not(:disabled) { background-color: #383838; border-color: var(--primary-gold); }
         .btn:active:not(:disabled) { transform: scale(0.97); }
         .btn:disabled { background-color: #222; color: var(--text-muted); border-color: #333; cursor: not-allowed; opacity: 0.6; }
-        .btn.primary { background-color: var(--primary-gold); color: #1a1a1a; font-weight: 700; border-color: var(--primary-gold); }
+        .btn.primary, .btn.active { background-color: var(--primary-gold); color: #1a1a1a; font-weight: 700; border-color: var(--primary-gold); }
         .btn.danger { background-color: transparent; color: var(--danger-button-bg); border-color: var(--danger-button-bg); }
         .btn.danger:hover:not(:disabled), .btn.danger-confirm { background-color: var(--danger-button-bg); color: white; border-color: var(--danger-button-bg); }
-        .player-controls { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 8px; background: var(--card-bg); border-radius: var(--border-radius); margin-bottom: 15px; }
-        #player-count-display { font-weight: 500; font-size: 16px; margin: 0 5px; }
-        .secondary-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; }
-        .switch-container { display: flex; align-items: center; gap: 10px; background-color: var(--card-bg); padding: 8px 12px; border-radius: var(--border-radius); }
-        .switch-label { font-size: 14px; color: var(--text-muted); font-weight: 500; }
-        .switch-btn { background-color: #555; width: 50px; height: 28px; border-radius: 14px; padding: 3px; cursor: pointer; transition: background-color var(--transition-speed); display: flex; align-items: center; flex-shrink: 0; }
+        
+        /* 7. 新的中央控制区布局 */
+        .player-controls { 
+            display: flex; justify-content: space-between; align-items: center; gap: 8px; 
+            padding: 6px; background: var(--card-bg); border-radius: var(--border-radius); margin-bottom: 15px; 
+        }
+        .player-count-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #player-count-display { font-weight: 500; font-size: 15px; margin: 0 4px; }
+
+        .secondary-controls { 
+            display: flex; justify-content: flex-end; align-items: center; 
+            margin-bottom: 15px; gap: 12px; flex-wrap: wrap; 
+        }
+        .switch-container { 
+            display: flex; align-items: center; gap: 8px; background-color: var(--card-bg); 
+            padding: 6px 10px; border-radius: var(--border-radius); 
+        }
+        .switch-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .switch-btn { 
+            background-color: #555; width: 44px; height: 24px; border-radius: 12px; 
+            padding: 2px; cursor: pointer; transition: background-color var(--transition-speed); 
+            display: flex; align-items: center; flex-shrink: 0; 
+        }
         .switch-btn.active { background-color: var(--primary-gold); }
-        .switch-btn-handle { background-color: white; width: 22px; height: 22px; border-radius: 50%; transition: transform var(--transition-speed) ease; }
-        .switch-btn.active .switch-btn-handle { transform: translateX(22px); }
-        #settingsBtn { font-size: 14px; padding: 8px 12px; background-color: transparent; border: 1px solid var(--text-muted); color: var(--text-muted); border-radius: 8px; flex-shrink: 0; }
+        .switch-btn-handle { 
+            background-color: white; width: 20px; height: 20px; border-radius: 50%; 
+            transition: transform var(--transition-speed) ease; 
+        }
+        .switch-btn.active .switch-btn-handle { transform: translateX(20px); }
+        .zero-sum-hint { 
+            font-size: 11px; color: var(--text-muted); 
+            background: rgba(255,255,255,0.05); padding: 2px 6px; 
+            border-radius: 4px; margin-left: 4px;
+        }
+
+        #settingsBtn { 
+            font-size: 13px; padding: 6px 10px; background-color: transparent; 
+            border: 1px solid var(--text-muted); color: var(--text-muted); border-radius: 6px;
+        }
         #settingsBtn:hover { border-color: var(--primary-gold); color: var(--primary-gold); }
+
         .player-list-wrapper { position: relative; }
-        .player-list { display: flex; flex-direction: column; gap: 12px; }
-        .player-list-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); border-radius: var(--border-radius); z-index: 10; display: flex; justify-content: center; align-items: center; text-align: center; color: white; font-size: 18px; font-weight: 500; padding: 20px; transition: opacity 0.3s, visibility 0.3s; opacity: 0; visibility: hidden; }
+        .player-list { display: flex; flex-direction: column; gap: 10px; }
+        .player-list-overlay { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); border-radius: var(--border-radius); 
+            z-index: 10; display: flex; justify-content: center; align-items: center; text-align: center; 
+            color: white; font-size: 16px; font-weight: 500; padding: 15px; 
+            transition: opacity 0.3s, visibility 0.3s; opacity: 0; visibility: hidden; 
+        }
         .player-list-overlay.visible { opacity: 1; visibility: visible; }
-        .vs-separator-container { display: flex; align-items: center; justify-content: center; padding: 5px 0; gap: 15px;}
-        .vs-text { font-size: 22px; font-weight: bold; color: var(--text-muted); }
-        #dynamicRecordBtn { padding: 8px 20px; font-size: 14px; background-color: var(--success-color); color: white; border-color: var(--success-color); font-weight: 700; border-radius: 20px; }
-        .player-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-left: 5px solid transparent; border-radius: var(--border-radius); box-shadow: var(--shadow); padding: 12px 15px; transition: all var(--transition-speed) ease; display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "nemesis main score" "nemesis name score"; align-items: center; gap: 0 15px; }
-        .player-card.rank-1 { background: linear-gradient(145deg, #2c2c2c, #3a321e); border-color: var(--primary-gold); border-left-color: var(--primary-gold); box-shadow: 0 0 20px var(--primary-gold-glow); }
+        
+        .vs-separator-container { 
+            display: flex; align-items: center; justify-content: center; 
+            padding: 4px 0; gap: 12px;
+        }
+        .vs-text { font-size: 18px; font-weight: bold; color: var(--text-muted); }
+        #dynamicRecordBtn { 
+            padding: 6px 16px; font-size: 13px; background-color: var(--success-color); 
+            color: white; border-color: var(--success-color); font-weight: 700; border-radius: 16px; 
+        }
+
+        .player-card { 
+            background-color: var(--card-bg); border: 1px solid var(--border-color); 
+            border-left: 4px solid transparent; border-radius: var(--border-radius); 
+            box-shadow: var(--shadow); padding: 10px 12px; transition: all var(--transition-speed) ease; 
+            display: grid; grid-template-columns: auto 1fr auto; 
+            grid-template-areas: "nemesis main score" "nemesis name score"; 
+            align-items: center; gap: 0 12px; 
+        }
+        .player-card.rank-1 { 
+            background: linear-gradient(145deg, #2c2c2c, #3a321e); 
+            border-color: var(--primary-gold); border-left-color: var(--primary-gold); 
+            box-shadow: 0 0 15px var(--primary-gold-glow); 
+        }
         .player-card.team-a { border-left-color: var(--team-a-color); background-color: var(--team-a-bg); }
         .player-card.team-b { border-left-color: var(--team-b-color); background-color: var(--team-b-bg); }
-        .nemesis-icon { grid-area: nemesis; cursor: pointer; width: 28px; height: 28px; color: #666; transition: all var(--transition-speed); }
-        .nemesis-icon.active { color: var(--danger-color); transform: scale(1.2); }
-        .player-rank-title { grid-area: main; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 2px; }
-        .rank-1 .player-rank-title { color: var(--primary-gold); font-weight: 700; }
-        .player-name { grid-area: name; font-weight: 700; font-size: clamp(18px, 5vw, 20px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .player-name:focus { outline: none; background: rgba(255,255,255,0.1); border-radius: 4px; padding: 0 4px;}
+        .player-card.card-mode { 
+            grid-template-columns: 28px 1fr auto; 
+            grid-template-areas: "rank name score"; gap: 0 8px;
+        }
+        .player-card .player-rank-number { 
+            grid-area: rank; font-size: 16px; color: var(--text-muted); 
+            font-weight: bold; text-align: center; 
+        }
+        .player-card.rank-1 .player-rank-number { color: var(--primary-gold); }
+
+        /* 5. 宿敌图标UI优化 */
+        .nemesis-container { 
+            grid-area: nemesis; display: flex; flex-direction: column; 
+            align-items: center; gap: 2px; cursor: pointer; transition: all var(--transition-speed); 
+        }
+        .nemesis-icon { 
+            font-size: 18px; color: #666; transition: all var(--transition-speed); opacity: 0.5; /* 默认半透明 */
+        }
+        .nemesis-label { 
+            font-size: 9px; color: #666; font-weight: 500; 
+            transition: all var(--transition-speed); opacity: 0.7;
+        }
+        .nemesis-container.active .nemesis-icon { color: var(--danger-color); transform: scale(1.1); opacity: 1; /* 激活后不透明 */ }
+        .nemesis-container.active .nemesis-label { color: var(--danger-color); opacity: 1; }
+
+        .player-name-container { 
+            grid-area: name; position: relative; display: flex; 
+            align-items: center; gap: 6px;
+        }
+        .player-name { 
+            font-weight: 700; font-size: clamp(16px, 4.5vw, 18px); 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            flex: 1; min-width: 0;
+        }
+        .player-name:focus { 
+            outline: none; background: rgba(255,255,255,0.1); 
+            border-radius: 4px; padding: 0 4px;
+        }
         .player-name.shaking { animation: shake-name 0.5s ease-in-out; }
-        .player-scoring { grid-area: score; display: flex; align-items: center; gap: 10px; }
-        .score-btn { width: 34px; height: 34px; font-size: 22px; font-weight: 300; border-radius: 50%; border: 1px solid var(--border-color); background-color: transparent; color: var(--text-color); cursor: pointer; transition: all 0.2s; display: inline-flex; justify-content: center; align-items: center; line-height: 1; }
-        .player-score { font-weight: 700; font-size: clamp(28px, 8vw, 32px); min-width: 45px; text-align: center; color: var(--primary-gold); transition: color 0.3s; }
+        
+        /* 6. 换人按钮条件显示 */
+        .name-selector-btn {
+            background: none; border: 1px solid var(--border-color); color: var(--text-muted);
+            border-radius: 4px; padding: 2px 6px; font-size: 11px; cursor: pointer;
+            transition: all 0.2s; flex-shrink: 0;
+            opacity: 0; visibility: hidden; pointer-events: none; /* 默认隐藏 */
+        }
+        .player-name-container.focused .name-selector-btn {
+            opacity: 1; visibility: visible; pointer-events: auto; /* focus时显示 */
+        }
+        .name-selector-btn:hover {
+            border-color: var(--primary-gold); color: var(--primary-gold);
+        }
+
+        .player-rank-title { 
+            grid-area: main; font-size: 11px; font-weight: 500; 
+            color: var(--text-muted); margin-bottom: 2px; 
+        }
+        .rank-1 .player-rank-title { color: var(--primary-gold); font-weight: 700; }
+        
+        .player-scoring { grid-area: score; display: flex; align-items: center; gap: 8px; }
+        .score-btn { 
+            width: 38px; height: 38px; font-size: 20px; font-weight: 300; 
+            border-radius: 50%; border: 1px solid var(--border-color); 
+            background-color: transparent; color: var(--text-color); cursor: pointer; 
+            transition: all 0.2s; display: inline-flex; justify-content: center; 
+            align-items: center; line-height: 1; 
+        }
+        .score-btn:hover:not(:disabled) { 
+            background-color: var(--primary-gold); 
+            color: #1a1a1a; border-color: var(--primary-gold); 
+        }
+        .player-score { 
+            font-weight: 700; font-size: clamp(24px, 7vw, 28px); 
+            min-width: 40px; text-align: center; color: var(--primary-gold); 
+            transition: color 0.3s; 
+        }
         .team-b .player-score { color: var(--team-b-color); }
         .player-score.popping { animation: score-pop 0.3s ease-out; }
-        .modal { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all var(--transition-speed) ease; }
+
+        .modal { 
+            position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: flex; 
+            justify-content: center; align-items: center; opacity: 0; visibility: hidden; 
+            transition: all var(--transition-speed) ease; 
+        }
         .modal.visible { opacity: 1; visibility: visible; }
-        .modal-content { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 25px; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); transform: scale(0.95); transition: transform var(--transition-speed) ease; max-height: 80vh; overflow-y: auto; }
+        .modal-content { 
+            background-color: var(--card-bg); border: 1px solid var(--border-color); 
+            border-radius: var(--border-radius); padding: 20px; width: 90%; max-width: 500px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4); transform: scale(0.95); 
+            transition: transform var(--transition-speed) ease; max-height: 80vh; overflow-y: auto; 
+        }
         .modal.visible .modal-content { transform: scale(1); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;}
-        .modal-title { font-size: 22px; font-weight: 700; margin: 0; color: var(--primary-gold); }
-        .modal-close { font-size: 32px; font-weight: 300; cursor: pointer; color: var(--text-muted); border: none; background: none; line-height: 1; }
-        .modal-section-title { font-size: 18px; font-weight: 500; margin-top: 25px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-gold); }
-        .stats-controls { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        #game-session-selector { flex-grow: 1; background-color: #333; border: 1px solid var(--border-color); color: var(--text-color); padding: 10px; border-radius: 8px; font-size: 15px; }
+        .modal-header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;
+        }
+        .modal-title { font-size: 20px; font-weight: 700; margin: 0; color: var(--primary-gold); }
+        .modal-close { 
+            font-size: 28px; font-weight: 300; cursor: pointer; 
+            color: var(--text-muted); border: none; background: none; line-height: 1; 
+        }
+        .modal-section-title { 
+            font-size: 16px; font-weight: 500; margin-top: 20px; margin-bottom: 12px; 
+            padding-bottom: 6px; border-bottom: 2px solid var(--primary-gold); 
+        }
+
+        /* 8. 记一笔页面优化 - 紧凑布局 */
+        #cardScoreModal .modal-content { 
+            width: 95%; max-width: 380px; max-height: 85vh; padding: 15px;
+        }
+        #cardScoreList { 
+            list-style: none; padding: 0; margin: 0; 
+            display: grid; grid-template-columns: 1fr; gap: 10px; /* 改为grid布局 */
+            max-height: calc(85vh - 200px); overflow-y: auto; padding-right: 5px;
+        }
+        #cardScoreList li { 
+            display: grid; grid-template-columns: 1fr auto; align-items: center; /* 名字和输入框并排 */
+            gap: 10px; background: rgba(255,255,255,0.05);
+            padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);
+        }
+        #cardScoreList .player-name-static { 
+            font-weight: bold; font-size: 15px; color: var(--text-color);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        #cardScoreList input[type="number"] { 
+            width: 120px; background-color: #444; border: 1px solid var(--border-color); 
+            color: var(--text-color); padding: 10px; border-radius: 6px; 
+            font-size: 16px; text-align: center;
+        }
+        #cardScoreList input[type="number"]:focus {
+            border-color: var(--primary-gold); outline: none; box-shadow: 0 0 8px var(--primary-gold-glow);
+        }
+        #zeroSumContainer { 
+            margin-top: 15px; display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px; background-color: rgba(255,255,255,0.05); border-radius: 8px; 
+        }
+        #zeroSumContainer .switch-label { font-size: 14px; }
+        #cardScoreSum { 
+            margin-top: 12px; text-align: center; font-size: 15px; font-weight: bold; 
+            color: var(--text-muted); transition: color 0.3s; padding: 8px;
+            background: rgba(255,255,255,0.03); border-radius: 8px;
+        }
+        #cardScoreSum.unbalanced { color: var(--danger-color); }
+
+        /* 4. 统计页面模式切换 */
+        .stats-controls { 
+            display: flex; justify-content: space-between; align-items: center; 
+            gap: 8px; margin-bottom: 15px; flex-wrap: wrap; 
+        }
+        #game-session-selector { 
+            flex-grow: 1; background-color: #333; border: 1px solid var(--border-color); 
+            color: var(--text-color); padding: 8px; border-radius: 6px; font-size: 14px; 
+        }
         .stats-list { list-style-type: none; padding: 0; margin: 0; }
-        .stats-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid var(--border-color); font-size: 15px; }
+        .stats-list li { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px 4px; border-bottom: 1px solid var(--border-color); font-size: 14px; 
+        }
         .stats-list li:last-child { border-bottom: none; }
-        .rank-list .rank-1-item { background-color: var(--team-a-bg); border-radius: 8px; font-weight: 700; color: var(--primary-gold); }
+        .rank-list .rank-1-item { 
+            background-color: var(--team-a-bg); border-radius: 6px; 
+            font-weight: 700; color: var(--primary-gold); 
+        }
         .stat-value, .rank-score { font-weight: bold; color: var(--primary-gold); text-align: right; }
-        .rank-score small { font-weight: 400; color: var(--text-muted); display: block; font-size: 13px; margin-top: 3px; }
-        .rank-list .rank-1-item .rank-score, .rank-list .rank-1-item .rank-score small { color: var(--primary-gold); }
-        .settings-list, .session-list { list-style-type: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-        .settings-list li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .settings-list .setting-label { color: var(--text-muted); font-weight: bold; min-width: 70px; text-align: right;}
-        .settings-list input[type="text"] { flex-grow: 1; background-color: #333; border: 1px solid var(--border-color); color: var(--text-color); padding: 10px; border-radius: 8px; font-size: 16px; }
-        .sound-setting .btn-small { padding: 4px 8px; font-size: 12px; border-radius: 6px; }
-        .sound-setting .status-text { font-size: 13px; color: var(--text-muted); flex-basis: 100%; margin-left: 80px; }
-        .session-list li { background-color: #333; padding: 10px 15px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .session-list li.active-session { background-color: var(--team-a-bg); border: 1px solid var(--primary-gold); }
+        .rank-score small { 
+            font-weight: 400; color: var(--text-muted); display: block; 
+            font-size: 12px; margin-top: 2px; 
+        }
+        .rank-list .rank-1-item .rank-score, .rank-list .rank-1-item .rank-score small { 
+            color: var(--primary-gold); 
+        }
+
+        .settings-list, .session-list { 
+            list-style-type: none; padding: 0; margin: 0; 
+            display: flex; flex-direction: column; gap: 8px; 
+        }
+        .settings-list li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .settings-list .setting-label { 
+            color: var(--text-muted); font-weight: bold; 
+            min-width: 60px; text-align: right;
+        }
+        .settings-list input[type="text"] { 
+            flex-grow: 1; background-color: #333; border: 1px solid var(--border-color); 
+            color: var(--text-color); padding: 8px; border-radius: 6px; font-size: 15px; 
+        }
+        .sound-setting .btn-small { padding: 3px 6px; font-size: 11px; border-radius: 4px; }
+        .sound-setting .status-text { 
+            font-size: 12px; color: var(--text-muted); 
+            flex-basis: 100%; margin-left: 68px; 
+        }
+        .session-list li { 
+            background-color: #333; padding: 8px 12px; border-radius: 6px; 
+            display: flex; align-items: center; justify-content: space-between; gap: 8px; 
+        }
+        .session-list li.active-session { 
+            background-color: var(--team-a-bg); border: 1px solid var(--primary-gold); 
+        }
         .session-name { font-weight: bold; flex-grow: 1; }
-        .session-actions .btn-small { padding: 5px; font-size: 14px; background: none; border: none; color: var(--text-muted); }
+        .session-actions .btn-small { 
+            padding: 4px; font-size: 12px; background: none; 
+            border: none; color: var(--text-muted); 
+        }
         .session-actions .btn-small:hover { color: var(--primary-gold); }
         .session-actions .btn-small.delete:hover { color: var(--danger-color); }
-        .modal-footer { margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
-        #toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background-color: var(--primary-gold); color: var(--bg-color); padding: 12px 25px; border-radius: 25px; z-index: 2000; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); opacity: 0; visibility: hidden; }
-        #toast-container.show { visibility: visible; animation: toast-in-out 3s ease-in-out forwards; }
+
+        .modal-footer { 
+            margin-top: 20px; display: flex; justify-content: flex-end; 
+            gap: 8px; flex-wrap: wrap; 
+        }
+
+        #playerHistoryModal .modal-content { max-height: 65vh; }
+        .player-history-list { 
+            list-style: none; padding: 0; margin: 12px 0; 
+            max-height: 35vh; overflow-y: auto; 
+        }
+        .player-history-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px 12px; background: var(--card-bg); 
+            border: 1px solid var(--border-color); border-radius: 6px; 
+            margin-bottom: 6px; cursor: pointer; transition: all 0.2s;
+        }
+        .player-history-item:hover { 
+            background: rgba(212, 175, 55, 0.1); border-color: var(--primary-gold);
+        }
+        .player-history-name { 
+            font-weight: 500; font-size: 15px; flex: 1;
+        }
+        .player-history-delete { 
+            background: none; border: none; color: var(--danger-color); 
+            cursor: pointer; font-size: 14px; padding: 4px;
+            opacity: 0.7; transition: opacity 0.2s;
+        }
+        .player-history-delete:hover { opacity: 1; }
+        #toast-container { 
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); 
+            background-color: var(--primary-gold); color: var(--bg-color); 
+            padding: 10px 20px; border-radius: 20px; z-index: 2000; font-weight: bold; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); opacity: 0; visibility: hidden; 
+        }
+        #toast-container.show { 
+            visibility: visible; animation: toast-in-out 3s ease-in-out forwards; 
+        }
         .modal#upgradeModal .modal-content { text-align: center; }
-        .pro-feature-list { list-style-type: none; padding: 0; margin: 25px auto; max-width: 280px; text-align: left; }
-        .pro-feature-list li { margin-bottom: 12px; position: relative; padding-left: 28px; font-size: 16px; }
+        .pro-feature-list { 
+            list-style-type: none; padding: 0; margin: 20px auto; 
+            max-width: 260px; text-align: left; 
+        }
+        .pro-feature-list li { 
+            margin-bottom: 10px; position: relative; padding-left: 24px; font-size: 15px; 
+        }
         .pro-feature-list li::before { content: '👑'; position: absolute; left: 0; top: 0; }
-        #goToPurchaseBtn { background-color: var(--primary-gold); color: #1a1a1a; font-weight: 700; border-color: var(--primary-gold); }
-        #openActivationLink { color: var(--primary-gold); text-decoration: underline; cursor: pointer; display: block; margin-top: 20px; font-size: 14px; }
-        .activation-section { margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color); }
-        .activation-section h4 { color: var(--primary-gold); margin-bottom: 15px; font-weight: 500; }
-        #license-key-input { width: 100%; background-color: #333; border: 1px solid var(--border-color); color: var(--text-color); padding: 12px; border-radius: 8px; font-size: 16px; margin-bottom: 10px; }
-        #license-key-input:focus { border-color: var(--primary-gold); outline: none; box-shadow: 0 0 10px var(--primary-gold-glow); }
-        #activation-status { color: var(--success-color); font-weight: bold; display: none; margin-top: 10px; }
-        #helpModal .modal-content p, #helpModal .modal-content li { line-height: 1.8; color: var(--text-color); }
-        #helpModal .modal-content ul { padding-left: 20px; margin-top: 10px;}
+        #goToPurchaseBtn { 
+            background-color: var(--primary-gold); color: #1a1a1a; 
+            font-weight: 700; border-color: var(--primary-gold); 
+        }
+        #openActivationLink { 
+            color: var(--primary-gold); text-decoration: underline; 
+            cursor: pointer; display: block; margin-top: 15px; font-size: 13px; 
+        }
+        .activation-section { 
+            margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); 
+        }
+        .activation-section h4 { 
+            color: var(--primary-gold); margin-bottom: 12px; font-weight: 500; 
+        }
+        #license-key-input { 
+            width: 100%; background-color: #333; border: 1px solid var(--border-color); 
+            color: var(--text-color); padding: 10px; border-radius: 6px; 
+            font-size: 15px; margin-bottom: 8px; 
+        }
+        #license-key-input:focus { 
+            border-color: var(--primary-gold); outline: none; 
+            box-shadow: 0 0 8px var(--primary-gold-glow); 
+        }
+        #activation-status { 
+            color: var(--success-color); font-weight: bold; 
+            display: none; margin-top: 8px; 
+        }
+        #helpModal .modal-content p, #helpModal .modal-content li { 
+            line-height: 1.7; color: var(--text-color); 
+        }
+        #helpModal .modal-content ul { padding-left: 18px; margin-top: 8px;}
         #helpModal .modal-content b { color: var(--primary-gold); }
-        .text-input-field { width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #333; color: var(--text-color); margin-top: 10px; }
+        .text-input-field { 
+            width: 100%; padding: 10px; font-size: 15px; border-radius: 6px; 
+            border: 1px solid var(--border-color); background-color: #333; 
+            color: var(--text-color); margin-top: 8px; 
+        }
         #comprehensive-stats-view { display: none; }
+
+        @media (max-width: 375px) {
+            body { padding: 10px; }
+            h1 { font-size: 18px; }
+            .btn { padding: 8px 10px; font-size: 13px; }
+            .player-card { padding: 8px 10px; }
+            .player-name { font-size: 15px; }
+            .player-score { font-size: 22px; }
+            .score-btn { width: 34px; height: 34px; font-size: 18px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Main UI -->
-        <div class="title-container"><button id="helpBtn" class="title-icon-btn" title="使用说明"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></button><h1>榜一战神生成器</h1><button id="sessionManagerBtn" class="title-icon-btn" title="存档管理器"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/></svg></button></div>
-        <div class="main-controls"><button id="teamUpBtn" class="btn primary">随机组队</button><button id="newRoundBtn" class="btn">新一局</button><button id="statsBtn" class="btn">数据统计</button></div>
-        <div class="player-controls"><button id="removePlayerBtn" class="btn">-</button><span id="player-count-display">4 位玩家</span><button id="addPlayerBtn" class="btn">+</button></div>
-        <div class="secondary-controls"><div id="modeSwitchContainer" class="switch-container"><span id="modeLabel" class="switch-label">组队模式</span><div id="modeSwitch" class="switch-btn active" title="切换计分模式"><div class="switch-btn-handle"></div></div></div><div id="repeatSwitchContainer" class="switch-container"><span id="allowRepeatLabel" class="switch-label">避免重复</span><div id="allowRepeatSwitch" class="switch-btn" title="切换组队模式"><div class="switch-btn-handle"></div></div></div><button id="settingsBtn" class="btn">设置</button></div>
-        <div class="player-list-wrapper"><div id="playerList" class="player-list"></div><div id="playerListOverlay" class="player-list-overlay">请点击 [随机组队] 开始</div></div>
+        <div class="title-container">
+            <button id="helpBtn" class="title-icon-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+            </button>
+            <h1>谁是榜一 - 超级计分器</h1>
+            <button id="sessionManagerBtn" class="title-icon-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- 1 & 2. 整合后的顶部控制区 -->
+        <div class="top-controls">
+            <div class="mode-selector">
+                <button id="modeSelectorBtn" class="btn">模式：对决</button>
+                <div id="modeDropdown" class="mode-dropdown">
+                    <div class="mode-dropdown-item" data-mode="duel">⚔️ 对决模式</div>
+                    <div class="mode-dropdown-item" data-mode="card">🎴 牌局模式</div>
+                </div>
+            </div>
+            <button id="statsBtn" class="btn">数据统计</button>
+        </div>
+
+        <!-- 7. 整合后的中央控制区 -->
+        <div class="player-controls">
+            <button id="mainActionBtn" class="btn primary">随机组队</button>
+            <div class="player-count-controls">
+                <button id="removePlayerBtn" class="btn">-</button>
+                <span id="player-count-display">4 位玩家</span>
+                <button id="addPlayerBtn" class="btn">+</button>
+            </div>
+            <button id="newRoundBtn" class="btn">新一局</button>
+        </div>
+
+        <div class="secondary-controls">
+             <button id="settingsBtn" class="btn">设置</button>
+        </div>
+
+        <div class="player-list-wrapper">
+            <div id="playerList" class="player-list"></div>
+            <div id="playerListOverlay" class="player-list-overlay">请点击 [随机组队] 开始</div>
+        </div>
     </div>
     
     <!-- Modals -->
     <div id="statsModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header"><h2 class="modal-title">战局分析</h2><button class="modal-close">&times;</button></div>
-            
+            <div class="modal-header">
+                <h2 class="modal-title">战局分析</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <!-- 4. 数据统计中的模式切换 -->
+            <div class="stats-controls" style="justify-content: flex-start;">
+                 <div class="mode-selector">
+                    <button id="statsModeSelectorBtn" class="btn">查看：对决数据</button>
+                    <div id="statsModeDropdown" class="mode-dropdown">
+                        <div class="mode-dropdown-item" data-mode="duel">⚔️ 对决数据</div>
+                        <div class="mode-dropdown-item" data-mode="card">🎴 牌局数据</div>
+                    </div>
+                </div>
+            </div>
             <div id="game-session-view">
                 <div class="stats-controls">
                     <select id="game-session-selector"></select>
                     <button id="show-comprehensive-btn" class="btn">查看综合数据</button>
                 </div>
-                <div id="generalStatsContainer"><h3 class="modal-section-title">本局数据</h3><ul class="stats-list" id="generalStatsList"></ul></div>
-                <div id="rankingsContainer"><h3 class="modal-section-title">本局排行榜 (积分)</h3><ul class="stats-list rank-list" id="rankList"></ul></div>
-                <div id="teamStatsContainer"><h3 class="modal-section-title">本局CP组合</h3><ul class="stats-list" id="teamStatsList"></ul></div>
+                <div id="generalStatsContainer">
+                    <h3 class="modal-section-title">本局数据</h3>
+                    <ul class="stats-list" id="generalStatsList"></ul>
+                </div>
+                <div id="rankingsContainer">
+                    <h3 class="modal-section-title">本局排行榜 (积分)</h3>
+                    <ul class="stats-list rank-list" id="rankList"></ul>
+                </div>
+                <div id="teamStatsContainer">
+                    <h3 class="modal-section-title">本局CP组合</h3>
+                    <ul class="stats-list" id="teamStatsList"></ul>
+                </div>
             </div>
-
             <div id="comprehensive-stats-view">
                 <div class="stats-controls">
                     <button id="show-game-session-btn" class="btn">返回战局数据</button>
                 </div>
-                 <div id="comprehensive-generalStatsContainer"><h3 class="modal-section-title">综合数据 (生涯总览)</h3><ul class="stats-list" id="comprehensive-generalStatsList"></ul></div>
-                <div id="comprehensive-rankingsContainer"><h3 class="modal-section-title">综合排行榜 (积分)</h3><ul class="stats-list rank-list" id="comprehensive-rankList"></ul></div>
-                <div id="comprehensive-teamStatsContainer"><h3 class="modal-section-title">综合CP组合</h3><ul class="stats-list" id="comprehensive-teamStatsList"></ul></div>
+                <div id="comprehensive-generalStatsContainer">
+                    <h3 class="modal-section-title">综合数据 (生涯总览)</h3>
+                    <ul class="stats-list" id="comprehensive-generalStatsList"></ul>
+                </div>
+                <div id="comprehensive-rankingsContainer">
+                    <h3 class="modal-section-title">综合排行榜 (积分)</h3>
+                    <ul class="stats-list rank-list" id="comprehensive-rankList"></ul>
+                </div>
+                <div id="comprehensive-teamStatsContainer">
+                    <h3 class="modal-section-title">综合CP组合</h3>
+                    <ul class="stats-list" id="comprehensive-teamStatsList"></ul>
+                </div>
             </div>
-
             <div class="modal-footer" style="justify-content: flex-start; border-top: 1px solid var(--border-color); padding-top: 15px;">
                 <button id="deleteCurrentArchiveBtn" class="btn danger">删除当前存档</button>
             </div>
         </div>
     </div>
-    <div id="settingsModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">设置</h2><button class="modal-close">&times;</button></div><div id="settingsContainer"><h3 class="modal-section-title">全局设置</h3><div class="switch-container" style="justify-content: space-between; padding: 10px; background: none;"><span class="switch-label" style="font-weight:bold; color: var(--text-color);">开启所有音效</span><div id="masterSoundSwitch" class="switch-btn"><div class="switch-btn-handle"></div></div></div><h3 class="modal-section-title">音效反馈 (可选)</h3><ul id="sound-settings-list" class="settings-list"></ul><h3 class="modal-section-title">自定义称号</h3><ul id="title-editor-list" class="settings-list"></ul></div><div class="activation-section"><h4 id="activation-title">专业版激活</h4><div id="activation-form"><input type="text" id="license-key-input" placeholder="在此输入您的许可证密钥"><button id="activate-btn" class="btn primary" style="width:100%; margin-top:10px;">激活</button></div><p id="activation-status">✅ 专业版已激活。所有数据将被永久保存。</p></div><div class="modal-footer"><button id="restoreDefaultsBtn" class="btn danger">恢复默认</button><button id="saveSettingsBtn" class="btn primary">保存</button></div></div></div>
-    <div id="upgradeModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">🚀 升级到专业版</h2><button class="modal-close">&times;</button></div><p style="text-align: center; margin-top: 15px; font-size: 16px;">解锁全部潜能，永久保存您的辉煌战绩！</p><ul class="pro-feature-list"><li><b>多存档系统：</b>为不同游戏和朋友创建独立战绩</li><li><b>深度数据统计：</b>解锁战局分析与CP组合数据</li><li><b>完全个性化：</b>自定义玩家称号和操作音效</li><li>支持个人/团队双计分模式</li></ul><div class="modal-footer" style="flex-direction: column; align-items: center; gap: 15px;"><button id="goToPurchaseBtn" class="btn primary" style="width: 80%;">立即购买</button><a id="openActivationLink">已有密钥？点击此处激活</a></div></div></div>
-    <div id="sessionManagerModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">存档管理器</h2><button class="modal-close">&times;</button></div><ul id="sessionList" class="session-list"></ul><div class="modal-footer" style="justify-content: center;"><button id="createNewSessionBtn" class="btn primary" style="width: 100%;">创建新存档</button></div></div></div>
-    <div id="helpModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 class="modal-title">使用说明</h2><button class="modal-close">&times;</button></div><div><h3 class="modal-section-title">基本操作</h3><p><b>玩家管理:</b> 使用 <b>+</b> / <b>-</b> 按钮增加或减少玩家数量 (2-8人)。<br><b>玩家改名:</b> 直接点击玩家名称即可进行编辑，完成后点击其他区域保存。</p><h3 class="modal-section-title">计分模式</h3><p><b>个人模式:</b> 每位玩家独立计分，通过玩家卡片右侧的 <b>+</b> / <b>-</b> 按钮进行加减分。<br><b>组队模式:</b> 这是核心玩法。流程如下：<ul><li><b>1. 随机组队:</b> 点击 <b>[随机组队]</b> 按钮，系统会将所有玩家随机分成两队。</li><li><b>2. 对局计分:</b> 任意给一方队员加分，则该队全体加分，另一队全体减分。</li><li><b>3. 记录本局:</b> 对局结束后，点击两队之间的 <b>[记录本局]</b> 按钮，记录胜负关系。</li></ul><b>小提示：</b>在一局计分后 (即分数发生变化后)，直接点击 <b>[随机组队]</b> 也会自动为您记录本局胜负，并直接开始新一轮组队。</p><h3 class="modal-section-title">高级功能</h3><p><b>新一局:</b> 点击 <b>[新一局]</b> 会清空所有玩家的当前分数，但保留历史胜负数据。<b>(Pro功能)</b> 点击后，会将本局数据归档，可在数据统计中回顾。</p><p><b>宿敌指定:</b> 点击玩家卡片最左侧的交叉剑图标，可将玩家设为“宿敌”。在组队时，宿敌会被优先分到不同队伍，增加对决的戏剧性！(最多指定2名)</p><h3 class="modal-section-title">专业版 (Pro) 特权</h3><p>升级到专业版后，以下高级功能将为您解锁：</p><ul><li><b>存档管理器:</b> (标题右侧文件夹图标) 您可以创建多个独立的存档，为不同的朋友、不同的游戏场景分别记录战绩，数据互不干扰。</li><li><b>深度数据统计:</b> (主界面按钮) 查看总局数、历史胜负排行榜和“CP组合分析”，全面掌握战局。并可切换查看当前战局、历史战局和生涯综合数据。</li><li><b>完全个性化:</b> (设置按钮) 自由编辑玩家的段位称号，并上传自定义的提示音效，打造专属计分器。</li></ul></div></div></div>
-    <div id="textInputModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="textInputTitle" class="modal-title">输入</h2><button class="modal-close">&times;</button></div><p id="textInputPrompt" style="margin-top: 15px; margin-bottom: 10px; color: var(--text-muted);"></p><input type="text" id="textInputField" class="text-input-field"><div class="modal-footer"><button id="textInputCancelBtn" class="btn">取消</button><button id="textInputConfirmBtn" class="btn primary">确认</button></div></div></div>
-    <div id="confirmModal" class="modal"><div class="modal-content"><div class="modal-header"><h2 id="confirmModalTitle" class="modal-title">请确认</h2><button class="modal-close">&times;</button></div><p id="confirmModalText" style="margin: 20px 0; font-size: 16px; line-height: 1.6;"></p><div class="modal-footer"><button id="confirmModalCancelBtn" class="btn">取消</button><button id="confirmModalConfirmBtn" class="btn primary">确认</button></div></div></div>
 
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">设置</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div id="settingsContainer">
+                <h3 class="modal-section-title">全局设置</h3>
+                <div class="switch-container" style="justify-content: space-between; padding: 10px; background: none;">
+                    <span class="switch-label" style="font-weight:bold; color: var(--text-color);">开启所有音效</span>
+                    <div id="masterSoundSwitch" class="switch-btn">
+                        <div class="switch-btn-handle"></div>
+                    </div>
+                </div>
+
+                <!-- 3. 模式规则移入设置 -->
+                <h3 class="modal-section-title">模式规则 (对决)</h3>
+                <div id="duelModeOptions" style="display:flex; flex-direction:column; gap: 10px;">
+                    <div class="switch-container" style="justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.05);">
+                        <span id="allowRepeatLabel" class="switch-label" style="color: var(--text-color);">避免重复组队</span>
+                        <div id="allowRepeatSwitch" class="switch-btn">
+                            <div class="switch-btn-handle"></div>
+                        </div>
+                    </div>
+                    <div class="switch-container" style="justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.05);">
+                        <span class="switch-label" style="color: var(--text-color);">零和模式 <small>(对手扣分)</small></span>
+                        <div id="zeroSumDuelSwitch" class="switch-btn">
+                            <div class="switch-btn-handle"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="modal-section-title">音效反馈 (可选)</h3>
+                <ul id="sound-settings-list" class="settings-list"></ul>
+                <h3 class="modal-section-title">自定义称号</h3>
+                <ul id="title-editor-list" class="settings-list"></ul>
+                <h3 class="modal-section-title">历史玩家管理</h3>
+                <button id="managePlayerHistoryBtn" class="btn" style="width: 100%;">管理历史玩家名单</button>
+            </div>
+            <div class="activation-section">
+                <h4 id="activation-title">专业版激活</h4>
+                <div id="activation-form">
+                    <input type="text" id="license-key-input" placeholder="在此输入您的许可证密钥">
+                    <button id="activate-btn" class="btn primary" style="width:100%; margin-top:10px;">激活</button>
+                </div>
+                <p id="activation-status">✅ 专业版已激活。所有数据将被永久保存。</p>
+            </div>
+            <div class="modal-footer">
+                <button id="restoreDefaultsBtn" class="btn danger">恢复默认</button>
+                <button id="saveSettingsBtn" class="btn primary">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 其他模态框 (未修改，为保持完整性而保留) -->
+    <div id="upgradeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🚀 升级到专业版</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <p style="text-align: center; margin-top: 15px; font-size: 16px;">解锁全部潜能，永久保存您的辉煌战绩！</p>
+            <ul class="pro-feature-list">
+                <li><b>多存档系统：</b>为不同游戏和朋友创建独立战绩</li>
+                <li><b>牌局模式：</b>为麻将、斗地主等游戏设计的专用计分模式</li>
+                <li><b>深度数据统计：</b>解锁战局分析与CP组合数据</li>
+                <li><b>完全个性化：</b>自定义玩家称号和操作音效</li>
+            </ul>
+            <div class="modal-footer" style="flex-direction: column; align-items: center; gap: 15px;">
+                <button id="goToPurchaseBtn" class="btn primary" style="width: 80%;">立即购买</button>
+                <a id="openActivationLink">已有密钥？点击此处激活</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="sessionManagerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">存档管理器</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <ul id="sessionList" class="session-list"></ul>
+            <div class="modal-footer" style="justify-content: center;">
+                <button id="createNewSessionBtn" class="btn primary" style="width: 100%;">创建新存档</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">使用说明</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div>
+                <h3 class="modal-section-title">核心模式</h3>
+                <p>本工具提供两种核心计分模式，可在主界面顶部按钮切换。</p>
+                <p><b>1. 对决模式:</b> 适用于任何两方对抗的游戏 (如2v2开黑)。默认开启零和模式，一方得分，另一方则失分。<br>
+                &nbsp; &nbsp; - <b>宿敌指定:</b> 点击玩家卡片最左侧的"设敌"按钮，可将玩家设为"宿敌"。在组队时，宿敌会被优先分到不同队伍。<br>
+                &nbsp; &nbsp; - <b>模式规则:</b> 可在 <b>[设置]</b> -> <b>[模式规则]</b> 中配置是否避免重复组队或关闭零和模式。</p>
+                <p><b>2. 牌局模式 (Pro):</b> 专为麻将、斗地主、德州扑克等多方棋牌游戏设计。每位玩家独立记账。<br>
+                &nbsp; &nbsp; - <b>如何计分:</b> 点击主界面的 <b>[记一笔]</b> 按钮，在弹出的窗口中输入本局每位玩家的得分增减即可。<br>
+                &nbsp; &nbsp; - <b>零和对账(Pro):</b> 在"记一笔"窗口中，开启此功能可确保所有玩家得分相加为零，避免记错账。</p>
+                <h3 class="modal-section-title">基本操作</h3>
+                <p><b>玩家管理:</b> 使用 <b>+</b> / <b>-</b> 按钮增加或减少玩家数量 (2-8人)。<br>
+                <b>玩家改名:</b> 直接点击玩家名称即可进行编辑。编辑时会浮现 <b>[换人]</b> 按钮，可从历史玩家中快速选择。</p>
+                <h3 class="modal-section-title">专业版 (Pro) 特权</h3>
+                <p>升级到专业版后，以下高级功能将为您解锁：</p>
+                <ul>
+                    <li><b>存档管理器:</b> (标题右侧文件夹图标) 您可以创建多个独立的存档，为不同的朋友、不同的游戏场景分别记录战绩，数据互不干扰。</li>
+                    <li><b>牌局模式:</b> 开启专为棋牌游戏设计的独立计分系统。</li>
+                    <li><b>深度数据统计:</b> (主界面按钮) 查看总局数、历史胜负排行榜和"CP组合分析"，全面掌握战局。</li>
+                    <li><b>完全个性化:</b> (设置按钮) 自由编辑玩家的段位称号，并上传自定义的提示音效。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="textInputModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="textInputTitle" class="modal-title">输入</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <p id="textInputPrompt" style="margin-top: 15px; margin-bottom: 10px; color: var(--text-muted);"></p>
+            <input type="text" id="textInputField" class="text-input-field">
+            <div class="modal-footer">
+                <button id="textInputCancelBtn" class="btn">取消</button>
+                <button id="textInputConfirmBtn" class="btn primary">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="confirmModalTitle" class="modal-title">请确认</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <p id="confirmModalText" style="margin: 20px 0; font-size: 16px; line-height: 1.6;"></p>
+            <div class="modal-footer">
+                <button id="confirmModalCancelBtn" class="btn">取消</button>
+                <button id="confirmModalConfirmBtn" class="btn primary">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cardScoreModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">记录本局得分</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <ul id="cardScoreList"></ul>
+            <div id="zeroSumContainer">
+                <label class="switch-label">零和对账<span class="tooltip">(输家扣分=赢家得分)</span></label>
+                <div id="zeroSumSwitch" class="switch-btn">
+                    <div class="switch-btn-handle"></div>
+                </div>
+            </div>
+            <p id="cardScoreSum">总和: 0</p>
+            <div class="modal-footer">
+                <button id="cardScoreCancelBtn" class="btn">取消</button>
+                <button id="cardScoreConfirmBtn" class="btn primary">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="playerHistoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">历史玩家管理</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <ul id="playerHistoryList" class="player-history-list"></ul>
+            <div style="margin-top: 20px;">
+                <input type="text" id="newPlayerNameInput" class="text-input-field" placeholder="添加新玩家名称">
+                <button id="addPlayerNameBtn" class="btn primary" style="width: 100%; margin-top: 10px;">添加到历史</button>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-close btn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="playerSelectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">选择玩家</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <ul id="playerSelectList" class="player-history-list"></ul>
+            <div class="modal-footer">
+                <button class="modal-close btn">取消</button>
+            </div>
+        </div>
+    </div>
+    
     <div id="toast-container"></div>
     
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const PURCHASE_LINK = "https://mbd.pub/o/bread/YZWUlpxsaw==", MASTER_KEY = "PEAK-DUEL-PRO-2024", PRO_TOKEN_KEY = 'superScorekeeper_v9_proToken', ARCHIVES_KEY = 'superScorekeeper_v9_archives', ACTIVE_SESSION_ID_KEY = 'superScorekeeper_v9_activeSessionId';
-        const generateDeviceFingerprint = () => btoa([navigator.userAgent, screen.width, screen.height, navigator.language, new Date().getTimezoneOffset()].join('||')), getProActivationToken = (key, fingerprint) => btoa(`v9.4-${key}-${fingerprint}`), isPro = () => localStorage.getItem(PRO_TOKEN_KEY) === getProActivationToken(MASTER_KEY, generateDeviceFingerprint());
+        const PURCHASE_LINK = "https://mbd.pub/o/bread/YZWUlpxsaw==";
+        const MASTER_KEY = "PEAK-DUEL-PRO-2024";
+        const PRO_TOKEN_KEY = 'superScorekeeper_v9_proToken';
+        const ARCHIVES_KEY = 'superScorekeeper_v9_archives';
+        const ACTIVE_SESSION_ID_KEY = 'superScorekeeper_v9_activeSessionId';
+        const GLOBAL_SETTINGS_KEY = 'superScorekeeper_v9_globalSettings';
+        const PLAYER_HISTORY_KEY = 'superScorekeeper_v9_playerHistory';
 
-        const playerListEl = document.getElementById('playerList'), addPlayerBtn = document.getElementById('addPlayerBtn'), removePlayerBtn = document.getElementById('removePlayerBtn'), playerCountDisp = document.getElementById('player-count-display'), teamUpBtn = document.getElementById('teamUpBtn'), newRoundBtn = document.getElementById('newRoundBtn'), deleteCurrentArchiveBtn = document.getElementById('deleteCurrentArchiveBtn'), statsBtn = document.getElementById('statsBtn'), toastContainer = document.getElementById('toast-container'), sessionManagerBtn = document.getElementById('sessionManagerBtn'), createNewSessionBtn = document.getElementById('createNewSessionBtn'), sessionListEl = document.getElementById('sessionList'), playerListOverlay = document.getElementById('playerListOverlay');
-        const modeSwitch = document.getElementById('modeSwitch'), modeLabel = document.getElementById('modeLabel'), repeatSwitchContainer = document.getElementById('repeatSwitchContainer'), allowRepeatSwitch = document.getElementById('allowRepeatSwitch'), allowRepeatLabel = document.getElementById('allowRepeatLabel');
-        const statsModal = document.getElementById('statsModal'), settingsModal = document.getElementById('settingsModal'), upgradeModal = document.getElementById('upgradeModal'), sessionManagerModal = document.getElementById('sessionManagerModal'), helpModal = document.getElementById('helpModal');
-        const gameSessionSelector = document.getElementById('game-session-selector'), showComprehensiveBtn = document.getElementById('show-comprehensive-btn'), showGameSessionBtn = document.getElementById('show-game-session-btn'), gameSessionView = document.getElementById('game-session-view'), comprehensiveStatsView = document.getElementById('comprehensive-stats-view');
-        const textInputModal = document.getElementById('textInputModal'), textInputTitle = document.getElementById('textInputTitle'), textInputPrompt = document.getElementById('textInputPrompt'), textInputField = document.getElementById('textInputField'), textInputCancelBtn = document.getElementById('textInputCancelBtn'), textInputConfirmBtn = document.getElementById('textInputConfirmBtn');
-        const confirmModal = document.getElementById('confirmModal'), confirmModalTitle = document.getElementById('confirmModalTitle'), confirmModalText = document.getElementById('confirmModalText'), confirmModalCancelBtn = document.getElementById('confirmModalCancelBtn'), confirmModalConfirmBtn = document.getElementById('confirmModalConfirmBtn');
-        const settingsBtn = document.getElementById('settingsBtn'), saveSettingsBtn = document.getElementById('saveSettingsBtn'), restoreDefaultsBtn = document.getElementById('restoreDefaultsBtn'), titleEditorList = document.getElementById('title-editor-list'), soundSettingsList = document.getElementById('sound-settings-list'), masterSoundSwitch = document.getElementById('masterSoundSwitch');
-        const licenseKeyInput = document.getElementById('license-key-input'), activateBtn = document.getElementById('activate-btn'), activationForm = document.getElementById('activation-form'), activationStatus = document.getElementById('activation-status'), goToPurchaseBtn = document.getElementById('goToPurchaseBtn'), openActivationLink = document.getElementById('openActivationLink'), helpBtn = document.getElementById('helpBtn');
+        const generateDeviceFingerprint = () => btoa([navigator.userAgent, screen.width, screen.height, navigator.language, new Date().getTimezoneOffset()].join('||'));
+        const getProActivationToken = (key, fingerprint) => btoa(`v9.7-ui-optimized-${key}-${fingerprint}`);
+        const isPro = () => localStorage.getItem(PRO_TOKEN_KEY) === getProActivationToken(MASTER_KEY, generateDeviceFingerprint());
 
-        let archives = {}, activeSessionId = null, players = [], teamHistory = [], totalRounds = 0, gameMode = 'team', allowRepeats = false, rankTitles = [], customSounds = {}, masterSoundEnabled = true, gameSessions = [];
-        let roundIsDirty = false, lastScoringTeam = null, lastTeamComposition = null;
-        let textInputAction = null, confirmAction = null;
+        // DOM Elements
+        const playerListEl = document.getElementById('playerList');
+        const addPlayerBtn = document.getElementById('addPlayerBtn');
+        const removePlayerBtn = document.getElementById('removePlayerBtn');
+        const playerCountDisp = document.getElementById('player-count-display');
+        const toastContainer = document.getElementById('toast-container');
+        const sessionManagerBtn = document.getElementById('sessionManagerBtn');
+        const createNewSessionBtn = document.getElementById('createNewSessionBtn');
+        const sessionListEl = document.getElementById('sessionList');
+        const playerListOverlay = document.getElementById('playerListOverlay');
+        const mainActionBtn = document.getElementById('mainActionBtn');
+        const newRoundBtn = document.getElementById('newRoundBtn');
+
+        const modeSelectorBtn = document.getElementById('modeSelectorBtn');
+        const modeDropdown = document.getElementById('modeDropdown');
+        const statsBtn = document.getElementById('statsBtn');
+
+        const allowRepeatSwitch = document.getElementById('allowRepeatSwitch');
+        const allowRepeatLabel = document.getElementById('allowRepeatLabel');
+        const zeroSumDuelSwitch = document.getElementById('zeroSumDuelSwitch');
+
+        const statsModal = document.getElementById('statsModal');
+        const settingsModal = document.getElementById('settingsModal');
+        const upgradeModal = document.getElementById('upgradeModal');
+        const sessionManagerModal = document.getElementById('sessionManagerModal');
+        const helpModal = document.getElementById('helpModal');
+        const cardScoreModal = document.getElementById('cardScoreModal');
+        const playerHistoryModal = document.getElementById('playerHistoryModal');
+        const playerSelectModal = document.getElementById('playerSelectModal');
+
+        const gameSessionSelector = document.getElementById('game-session-selector');
+        const showComprehensiveBtn = document.getElementById('show-comprehensive-btn');
+        const showGameSessionBtn = document.getElementById('show-game-session-btn');
+        const gameSessionView = document.getElementById('game-session-view');
+        const comprehensiveStatsView = document.getElementById('comprehensive-stats-view');
+        const statsModeSelectorBtn = document.getElementById('statsModeSelectorBtn');
+        const statsModeDropdown = document.getElementById('statsModeDropdown');
+        const teamStatsContainer = document.getElementById('teamStatsContainer');
+        const comprehensiveTeamStatsContainer = document.getElementById('comprehensive-teamStatsContainer');
+
+        const textInputModal = document.getElementById('textInputModal');
+        const textInputTitle = document.getElementById('textInputTitle');
+        const textInputPrompt = document.getElementById('textInputPrompt');
+        const textInputField = document.getElementById('textInputField');
+        const textInputCancelBtn = document.getElementById('textInputCancelBtn');
+        const textInputConfirmBtn = document.getElementById('textInputConfirmBtn');
+
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmModalTitle = document.getElementById('confirmModalTitle');
+        const confirmModalText = document.getElementById('confirmModalText');
+        const confirmModalCancelBtn = document.getElementById('confirmModalCancelBtn');
+        const confirmModalConfirmBtn = document.getElementById('confirmModalConfirmBtn');
+
+        const settingsBtn = document.getElementById('settingsBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const restoreDefaultsBtn = document.getElementById('restoreDefaultsBtn');
+        const titleEditorList = document.getElementById('title-editor-list');
+        const soundSettingsList = document.getElementById('sound-settings-list');
+        const masterSoundSwitch = document.getElementById('masterSoundSwitch');
+        const managePlayerHistoryBtn = document.getElementById('managePlayerHistoryBtn');
+
+        const licenseKeyInput = document.getElementById('license-key-input');
+        const activateBtn = document.getElementById('activate-btn');
+        const activationForm = document.getElementById('activation-form');
+        const activationStatus = document.getElementById('activation-status');
+        const goToPurchaseBtn = document.getElementById('goToPurchaseBtn');
+        const openActivationLink = document.getElementById('openActivationLink');
+        const helpBtn = document.getElementById('helpBtn');
+
+        const cardScoreList = document.getElementById('cardScoreList');
+        const cardScoreSum = document.getElementById('cardScoreSum');
+        const cardScoreConfirmBtn = document.getElementById('cardScoreConfirmBtn');
+        const cardScoreCancelBtn = document.getElementById('cardScoreCancelBtn');
+        const zeroSumSwitch = document.getElementById('zeroSumSwitch');
+
+        const playerHistoryList = document.getElementById('playerHistoryList');
+        const newPlayerNameInput = document.getElementById('newPlayerNameInput');
+        const addPlayerNameBtn = document.getElementById('addPlayerNameBtn');
+        const playerSelectList = document.getElementById('playerSelectList');
+
+        let archives = {};
+        let activeSessionId = null;
+        let players = [];
+        let teamHistory = [];
+        let totalRounds = 0;
+        let allowRepeats = false;
+        let rankTitles = [];
+        let gameSessions = [];
+        let viewMode = 'duel';
+        let statsViewMode = 'duel'; // 新增：用于统计视图的模式
+        let zeroSumCheckEnabled = true;
+        let zeroSumDuelEnabled = true;
+        let cardScoreRounds = 0;
+
+        let roundIsDirty = false;
+        let lastScoringTeam = null;
+        let lastTeamComposition = null;
+
+        let textInputAction = null;
+        let confirmAction = null;
+        let currentSelectingPlayerId = null;
+
+        let globalSettings = {
+            customSounds: { scoreUp: null, teamUp: null, record: null },
+            masterSoundEnabled: true,
+            playerHistory: []
+        };
         
-        const DEFAULT_RANK_TITLES = ['👑 榜一战神', '🥈 一方豪强', '🥉 中流砥柱', '江湖小虾', '初出茅庐', '潜力新星', '待展宏图', '不忘初心'], SOUND_EVENTS = { scoreUp: "加分反馈", teamUp: "组队反馈", record: "记录反馈" };
-        const NEMESIS_SVG = `<svg class="nemesis-icon-svg" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 9.5l-5 5M9.5 9.5l5 5"/><path d="M2.5 21.5l8-8"/><path d="M16 3l5 5"/><path d="M13.5 6.5l5 5"/><path d="M3 22l4-4"/><path d="M18 2l4 4"/></svg>`, RENAME_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`, DELETE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+        const DEFAULT_RANK_TITLES = ['👑 榜一战神', '🥈 一方豪强', '🥉 中流砥柱', '江湖小虾', '初出茅庐', '潜力新星', '待展宏图', '不忘初心'];
+        const SOUND_EVENTS = { scoreUp: "加分反馈", teamUp: "组队反馈", record: "记录反馈" };
+        const DELETE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+        const RENAME_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+        
+        // --- Core Logic (largely unchanged) ---
+        function loadGlobalSettings() {
+            const saved = localStorage.getItem(GLOBAL_SETTINGS_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                globalSettings = { ...globalSettings, ...parsed };
+            }
+            const oldHistory = localStorage.getItem(PLAYER_HISTORY_KEY);
+            if (oldHistory && !globalSettings.playerHistory?.length) {
+                globalSettings.playerHistory = JSON.parse(oldHistory);
+                saveGlobalSettings();
+                localStorage.removeItem(PLAYER_HISTORY_KEY);
+            }
+        }
+        function saveGlobalSettings() { localStorage.setItem(GLOBAL_SETTINGS_KEY, JSON.stringify(globalSettings)); }
+        function initializeApp() {
+            loadGlobalSettings();
+            if (isPro()) {
+                const savedArchives = localStorage.getItem(ARCHIVES_KEY);
+                archives = savedArchives ? JSON.parse(savedArchives) : {};
+                activeSessionId = localStorage.getItem(ACTIVE_SESSION_ID_KEY);
+                if (!activeSessionId || !archives[activeSessionId]) {
+                    const sessionIds = Object.keys(archives);
+                    if (sessionIds.length > 0) activeSessionId = sessionIds[0];
+                    else createInitialSession();
+                }
+            } else {
+                archives = {};
+                activeSessionId = 'free_session';
+                if (!archives[activeSessionId]) archives[activeSessionId] = getNewSessionData('免费体验存档');
+            }
+            loadSession(activeSessionId, false);
+            updateUIForProStatus();
+        }
+        function createInitialSession() {
+            const newId = `session_${Date.now()}`;
+            archives[newId] = getNewSessionData('默认存档');
+            activeSessionId = newId;
+            saveData();
+        }
+        function loadSessionData(data) {
+            const freshData = JSON.parse(JSON.stringify(data));
+            players = freshData.players;
+            teamHistory = freshData.teamHistory;
+            totalRounds = freshData.totalRounds;
+            allowRepeats = freshData.allowRepeats || false;
+            viewMode = freshData.viewMode || 'duel';
+            statsViewMode = viewMode; // Sync stats view with current mode
+            rankTitles = freshData.rankTitles || [...DEFAULT_RANK_TITLES];
+            zeroSumCheckEnabled = typeof freshData.zeroSumCheckEnabled === 'boolean' ? freshData.zeroSumCheckEnabled : true;
+            zeroSumDuelEnabled = typeof freshData.zeroSumDuelEnabled === 'boolean' ? freshData.zeroSumDuelEnabled : true;
+            gameSessions = freshData.gameSessions || [];
+            cardScoreRounds = freshData.cardScoreRounds || 0;
+            roundIsDirty = false;
+            lastScoringTeam = null;
+            lastTeamComposition = null;
+        }
+        function getNewSessionData(name) {
+            const defaultPlayers = Array.from({ length: 4 }, (_, i) => ({
+                id: Date.now() + Math.random() + i,
+                name: `玩家 ${i + 1}`, score: 0, wins: 0, losses: 0, team: null, isNemesis: false
+            }));
+            return {
+                name: name, players: defaultPlayers, teamHistory: [], totalRounds: 0, gameSessions: [],
+                allowRepeats: false, viewMode: 'duel', zeroSumCheckEnabled: true, zeroSumDuelEnabled: true,
+                rankTitles: [...DEFAULT_RANK_TITLES], cardScoreRounds: 0
+            };
+        }
+        function saveData() {
+            if (!isPro() || !activeSessionId) return;
+            archives[activeSessionId] = {
+                name: archives[activeSessionId]?.name, players, teamHistory, totalRounds, gameSessions,
+                allowRepeats, viewMode, zeroSumCheckEnabled, zeroSumDuelEnabled, rankTitles, cardScoreRounds
+            };
+            localStorage.setItem(ARCHIVES_KEY, JSON.stringify(archives));
+        }
+        function createPlayer(doSave = true) {
+            if (players.length >= 8) return;
+            players.push({
+                id: Date.now() + Math.random(), name: `玩家 ${players.length + 1}`,
+                score: 0, wins: 0, losses: 0, team: null, isNemesis: false
+            });
+            renderAll(doSave);
+        }
+        function removePlayer() {
+            if (players.length <= 2) return;
+            const removedPlayer = players.pop();
+            if (players.some(p => p.team)) smartClearTeams(false);
+            [teamHistory, ...gameSessions.map(s => s.teamHistory)].forEach(th => th.forEach(teams => {
+                teams[0] = teams[0].filter(id => id !== removedPlayer.id);
+                teams[1] = teams[1].filter(id => id !== removedPlayer.id);
+            }));
+            renderAll();
+        }
+        
+        // --- Main Render Function (Updated) ---
+        function renderAll(doSave = true) {
+            updateMainControls();
+            playerListEl.innerHTML = '';
+            const sortedForRanking = [...players].sort((a, b) => b.score - a.score);
+            const rankMap = new Map(sortedForRanking.map((p, i) => [p.id, i]));
+            
+            if (viewMode === 'duel') {
+                const isAwaitingTeamUp = !players.some(p => p.team);
+                playerListOverlay.classList.toggle('visible', isAwaitingTeamUp);
+                const renderQueue = isAwaitingTeamUp ? [...players] : [...players.filter(p => p.team === 'A'), 'VS_SEPARATOR', ...players.filter(p => p.team === 'B')];
+                renderQueue.forEach(item => {
+                    if (item === 'VS_SEPARATOR') playerListEl.appendChild(createVsSeparator());
+                    else if(typeof item === 'object' && item.id) {
+                        const playerCard = createPlayerCard(item, rankMap);
+                        if(isAwaitingTeamUp) playerCard.querySelectorAll('.score-btn').forEach(btn => btn.disabled = true);
+                        playerListEl.appendChild(playerCard);
+                    }
+                });
+            } else { // card mode
+                playerListOverlay.classList.remove('visible');
+                sortedForRanking.forEach((player, index) => playerListEl.appendChild(createPlayerCard(player, null, index)));
+            }
+            updateControlsState();
+            if (doSave) saveData();
+        }
 
-        function initializeApp() { if (isPro()) { const savedArchives = localStorage.getItem(ARCHIVES_KEY); archives = savedArchives ? JSON.parse(savedArchives) : {}; activeSessionId = localStorage.getItem(ACTIVE_SESSION_ID_KEY); if (!activeSessionId || !archives[activeSessionId]) { const sessionIds = Object.keys(archives); if (sessionIds.length > 0) activeSessionId = sessionIds[0]; else createInitialSession(); } } else { archives = {}; activeSessionId = 'free_session'; if (!archives[activeSessionId]) archives[activeSessionId] = getNewSessionData('免费体验存档'); } loadSession(activeSessionId, false); updateUIForProStatus(); }
-        function createInitialSession() { const newId = `session_${Date.now()}`; archives[newId] = getNewSessionData('默认存档'); activeSessionId = newId; saveData(); }
-        function loadSessionData(data) { const freshData = JSON.parse(JSON.stringify(data)); players = freshData.players; teamHistory = freshData.teamHistory; totalRounds = freshData.totalRounds; allowRepeats = freshData.allowRepeats || false; gameMode = freshData.gameMode || 'team'; rankTitles = freshData.rankTitles || [...DEFAULT_RANK_TITLES]; customSounds = freshData.customSounds || { scoreUp: null, teamUp: null, record: null }; masterSoundEnabled = typeof freshData.masterSoundEnabled === 'boolean' ? freshData.masterSoundEnabled : true; gameSessions = freshData.gameSessions || []; roundIsDirty = false; lastScoringTeam = null; lastTeamComposition = null; }
-        function getNewSessionData(name) { const defaultPlayers = Array.from({ length: 4 }, (_, i) => ({ id: Date.now() + Math.random() + i, name: `玩家 ${i + 1}`, score: 0, wins: 0, losses: 0, team: null, isNemesis: false })); return { name: name, players: defaultPlayers, teamHistory: [], totalRounds: 0, gameSessions: [], allowRepeats: false, gameMode: 'team', rankTitles: [...DEFAULT_RANK_TITLES], customSounds: { scoreUp: null, teamUp: null, record: null }, masterSoundEnabled: true }; }
-        function saveData() { if (!isPro() || !activeSessionId) return; archives[activeSessionId] = { name: archives[activeSessionId]?.name, players, teamHistory, totalRounds, gameSessions, allowRepeats, gameMode, rankTitles, customSounds, masterSoundEnabled }; localStorage.setItem(ARCHIVES_KEY, JSON.stringify(archives)); }
-        function createPlayer(doSave = true) { if (players.length >= 8) return; players.push({ id: Date.now() + Math.random(), name: `玩家 ${players.length + 1}`, score: 0, wins: 0, losses: 0, team: null, isNemesis: false }); renderAll(doSave); }
-        function removePlayer() { if (players.length <= 2) return; const removedPlayer = players.pop(); if (players.some(p => p.team)) smartClearTeams(false); [teamHistory, ...gameSessions.map(s => s.teamHistory)].forEach(th => th.forEach(teams => { teams[0] = teams[0].filter(id => id !== removedPlayer.id); teams[1] = teams[1].filter(id => id !== removedPlayer.id); })); renderAll(); }
-        function renderAll(doSave = true) { playerListEl.innerHTML = ''; const sortedForRanking = [...players].sort((a, b) => b.score - a.score), rankMap = new Map(sortedForRanking.map((p, i) => [p.id, i])); const isAwaitingTeamUp = gameMode === 'team' && !players.some(p => p.team); playerListOverlay.classList.toggle('visible', isAwaitingTeamUp); const renderQueue = gameMode === 'team' && players.some(p => p.team) ? [...players.filter(p => p.team === 'A'), 'VS_SEPARATOR', ...players.filter(p => p.team === 'B')] : [...players]; renderQueue.forEach(item => { if (item === 'VS_SEPARATOR') { playerListEl.appendChild(createVsSeparator()); } else if(typeof item === 'object' && item.id) { const playerCard = createPlayerCard(item, rankMap); if(isAwaitingTeamUp) playerCard.querySelectorAll('.score-btn').forEach(btn => btn.disabled = true); playerListEl.appendChild(playerCard); } }); updateControlsState(); if (doSave) saveData(); }
-        function createPlayerCard(player, rankMap) { const card = document.createElement('div'), rankIndex = rankMap.get(player.id), rankTitle = rankTitles[rankIndex] || rankTitles[rankTitles.length - 1]; card.className = 'player-card'; if (rankIndex === 0) card.classList.add('rank-1'); if (player.team) card.classList.add(`team-${player.team.toLowerCase()}`); card.dataset.playerId = player.id; card.innerHTML = `<div class="nemesis-icon ${player.isNemesis ? 'active' : ''}" data-action="toggle-nemesis" title="设为宿敌">${NEMESIS_SVG}</div><span class="player-rank-title">${rankTitle}</span><span class="player-name" contenteditable="true" spellcheck="false">${player.name}</span><div class="player-scoring"><button class="score-btn" data-action="minus">−</button><span class="player-score">${player.score}</span><button class="score-btn" data-action="plus">+</button></div>`; return card; }
-        function createVsSeparator() { const container = document.createElement('div'); container.className = 'vs-separator-container'; const vsText = document.createElement('span'); vsText.className = 'vs-text'; vsText.textContent = 'VS'; const btn = document.createElement('button'); btn.id = 'dynamicRecordBtn'; btn.className = 'btn'; btn.textContent = '记录本局'; btn.disabled = !roundIsDirty; container.appendChild(vsText); container.appendChild(btn); return container; }
-        function handleScoreChange(playerId, increment) { const player = players.find(p => p.id === playerId); if (!player) return; let affectedPlayers = []; if (gameMode === 'team' && player.team) { const scoringTeam = player.team; lastScoringTeam = scoringTeam; players.forEach(p => { if (p.team) { p.score += (p.team === scoringTeam ? increment : -increment); affectedPlayers.push(p.id); } }); } else { player.score += increment; affectedPlayers.push(player.id); } roundIsDirty = true; if (increment > 0) playSound('scoreUp'); renderAll(); affectedPlayers.forEach(id => { const scoreElToPop = playerListEl.querySelector(`.player-card[data-player-id="${id}"] .player-score`); if (scoreElToPop) { scoreElToPop.classList.add('popping'); scoreElToPop.addEventListener('animationend', () => scoreElToPop.classList.remove('popping'), { once: true }); } }); }
-        function smartTeamUp() { setAnimationLock(true); if (players.some(p => p.team)) { if (roundIsDirty && lastScoringTeam) recordRound(true); } document.querySelectorAll('.player-name').forEach(el => el.classList.add('shaking')); playSound('teamUp'); setTimeout(() => { players.forEach(p => p.team = null); roundIsDirty = false; lastScoringTeam = null; const nemeses = players.filter(p => p.isNemesis), available = players.filter(p => !p.isNemesis); let teamA, teamB, teamA_ids; do { teamA = []; teamB = []; if (nemeses.length === 2) { teamA.push(nemeses[0]); teamB.push(nemeses[1]); } else if (nemeses.length === 1) { teamA.push(nemeses[0]); } let shuffled = available.sort(() => 0.5 - Math.random()); shuffled.forEach(p => (teamA.length < players.length / 2) ? teamA.push(p) : teamB.push(p)); if (Math.random() > 0.5) [teamA, teamB] = [teamB, teamA]; teamA_ids = teamA.map(p => p.id).sort(); } while (!allowRepeats && players.length > 2 && lastTeamComposition && JSON.stringify(teamA_ids) === JSON.stringify(lastTeamComposition)); lastTeamComposition = teamA_ids; players.forEach(p => { p.team = teamA.some(pl => pl.id === p.id) ? 'A' : (teamB.some(pl => pl.id === p.id) ? 'B' : null); }); renderAll(); setAnimationLock(false); }, 500); }
-        function recordRound(isAuto = false) { if (!roundIsDirty || !lastScoringTeam) return; const winningTeam = lastScoringTeam, losingTeam = winningTeam === 'A' ? 'B' : 'A'; const teamA_ids = players.filter(p => p.team === 'A').map(p => p.id).sort(), teamB_ids = players.filter(p => p.team === 'B').map(p => p.id).sort(); if (teamA_ids.length > 0 && teamB_ids.length > 0) teamHistory.push([teamA_ids, teamB_ids].sort()); players.forEach(p => { if (p.team === winningTeam) p.wins++; else if (p.team === losingTeam) p.losses++; }); totalRounds++; roundIsDirty = false; lastScoringTeam = null; playSound('record'); showToast(isAuto ? '已自动记录本局' : '记录完成'); saveData(); updateControlsState(); }
+        // --- UI Element Creation (Unchanged) ---
+        function createPlayerCard(player, rankMap, cardModeRank) {
+            const card = document.createElement('div');
+            card.className = 'player-card';
+            card.dataset.playerId = player.id;
+            
+            if (viewMode === 'duel') {
+                const rankIndex = rankMap.get(player.id);
+                const rankTitle = rankTitles[rankIndex] || rankTitles[rankTitles.length - 1];
+                if (rankIndex === 0) card.classList.add('rank-1');
+                if (player.team) card.classList.add(`team-${player.team.toLowerCase()}`);
+                card.innerHTML = `
+                    <div class="nemesis-container ${player.isNemesis ? 'active' : ''}" data-action="toggle-nemesis">
+                        <div class="nemesis-icon">⚔️</div>
+                        <div class="nemesis-label">设敌</div>
+                    </div>
+                    <span class="player-rank-title">${rankTitle}</span>
+                    <div class="player-name-container">
+                        <span class="player-name" contenteditable="true" spellcheck="false">${player.name}</span>
+                        <button class="name-selector-btn" data-action="select-name">换人</button>
+                    </div>
+                    <div class="player-scoring">
+                        <button class="score-btn" data-action="minus">−</button>
+                        <span class="player-score">${player.score}</span>
+                        <button class="score-btn" data-action="plus">+</button>
+                    </div>
+                `;
+            } else { // card mode
+                card.classList.add('card-mode');
+                if (cardModeRank === 0) card.classList.add('rank-1');
+                card.innerHTML = `
+                    <span class="player-rank-number">${cardModeRank + 1}</span>
+                    <div class="player-name-container">
+                        <span class="player-name" contenteditable="true" spellcheck="false">${player.name}</span>
+                        <button class="name-selector-btn" data-action="select-name">换人</button>
+                    </div>
+                    <div class="player-scoring">
+                        <span class="player-score">${player.score}</span>
+                    </div>
+                `;
+            }
+            return card;
+        }
+        function createVsSeparator() {
+            const container = document.createElement('div');
+            container.className = 'vs-separator-container';
+            const vsText = document.createElement('span');
+            vsText.className = 'vs-text';
+            vsText.textContent = 'VS';
+            const btn = document.createElement('button');
+            btn.id = 'dynamicRecordBtn';
+            btn.className = 'btn';
+            btn.textContent = '记录本局';
+            btn.disabled = !roundIsDirty;
+            container.appendChild(vsText);
+            container.appendChild(btn);
+            return container;
+        }
 
-        // --- Session Management ---
-        function showCreateSessionModal() { showTextInputModal('创建新存档', '请输入新存档的名称：', `对局 ${new Date().toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, (name) => { const newId = `session_${Date.now()}`; archives[newId] = getNewSessionData(name); activeSessionId = newId; loadSession(newId, true); saveData(); hideModal(sessionManagerModal); }); }
-        function loadSession(id, showToastMsg = true) { if (!archives[id]) { initializeApp(); return; } activeSessionId = id; localStorage.setItem(ACTIVE_SESSION_ID_KEY, activeSessionId); loadSessionData(archives[id]); renderAll(false); if (showToastMsg) showToast(`已加载存档: ${archives[id].name}`); }
-        function renameSession(id) { showTextInputModal('重命名存档', '请输入新的存档名称：', archives[id].name, (newName) => { archives[id].name = newName; saveData(); renderSessionManager(); }); }
-        function deleteSession(idToDelete) { showConfirmModal('确认删除存档？', `此操作将永久删除存档 "${archives[idToDelete].name}" 及其所有战局历史，无法撤销。`, () => { if (Object.keys(archives).length <= 1 && isPro()) { showToast('无法删除唯一的存档'); return; } const deletedName = archives[idToDelete].name, wasActive = idToDelete === activeSessionId; delete archives[idToDelete]; if (wasActive) { const remainingIds = Object.keys(archives); activeSessionId = remainingIds.length > 0 ? remainingIds[0] : null; if (activeSessionId) loadSession(activeSessionId, false); else initializeApp(); } saveData(); renderSessionManager(); showToast(`存档 "${deletedName}" 已删除`); if (statsModal.classList.contains('visible')) hideModal(statsModal); }, 'danger-confirm'); }
-        function renderSessionManager() { sessionListEl.innerHTML = ''; const sessionIds = Object.keys(archives); if (sessionIds.length === 0) { sessionListEl.innerHTML = '<li>暂无存档，请创建一个新存档。</li>'; return; } sessionIds.forEach(id => { const session = archives[id], li = document.createElement('li'); li.className = (id === activeSessionId) ? 'active-session' : ''; li.dataset.sessionId = id; li.innerHTML = `<span class="session-name">${session.name}</span><div class="session-actions"><button class="btn-small" data-action="rename" title="重命名">${RENAME_SVG}</button><button class="btn-small delete" data-action="delete" title="删除">${DELETE_SVG}</button></div>`; const nameSpan = li.querySelector('.session-name'); if (id !== activeSessionId) { nameSpan.style.cursor = 'pointer'; nameSpan.title = '点击加载此存档'; nameSpan.addEventListener('click', () => { loadSession(id); hideModal(sessionManagerModal); }); } sessionListEl.appendChild(li); }); }
+        // --- Game Logic (Largely unchanged) ---
+        function handleScoreChange(playerId, increment) {
+            const player = players.find(p => p.id === playerId);
+            if (!player) return;
+            let affectedPlayers = [];
+            if (viewMode === 'duel' && player.team && zeroSumDuelEnabled) {
+                const scoringTeam = player.team;
+                lastScoringTeam = scoringTeam;
+                players.forEach(p => {
+                    if (p.team) {
+                        p.score += (p.team === scoringTeam ? increment : -increment);
+                        affectedPlayers.push(p.id);
+                    }
+                });
+            } else {
+                player.score += increment;
+                affectedPlayers.push(player.id);
+            }
+            roundIsDirty = true;
+            if (increment > 0) playSound('scoreUp');
+            renderAll();
+            affectedPlayers.forEach(id => {
+                const scoreElToPop = playerListEl.querySelector(`.player-card[data-player-id="${id}"] .player-score`);
+                if (scoreElToPop) {
+                    scoreElToPop.classList.add('popping');
+                    scoreElToPop.addEventListener('animationend', () => scoreElToPop.classList.remove('popping'), { once: true });
+                }
+            });
+        }
+        function smartTeamUp() {
+            setAnimationLock(true);
+            if (players.some(p => p.team)) {
+                if (roundIsDirty && lastScoringTeam) recordRound(true);
+            }
+            document.querySelectorAll('.player-name').forEach(el => el.classList.add('shaking'));
+            playSound('teamUp');
+            setTimeout(() => {
+                players.forEach(p => p.team = null);
+                roundIsDirty = false;
+                lastScoringTeam = null;
+                const nemeses = players.filter(p => p.isNemesis);
+                const available = players.filter(p => !p.isNemesis);
+                let teamA, teamB, teamA_ids;
+                do {
+                    teamA = []; teamB = [];
+                    if (nemeses.length === 2) { teamA.push(nemeses[0]); teamB.push(nemeses[1]); }
+                    else if (nemeses.length === 1) { teamA.push(nemeses[0]); }
+                    let shuffled = available.sort(() => 0.5 - Math.random());
+                    shuffled.forEach(p => (teamA.length < players.length / 2) ? teamA.push(p) : teamB.push(p));
+                    if (Math.random() > 0.5) [teamA, teamB] = [teamB, teamA];
+                    teamA_ids = teamA.map(p => p.id).sort();
+                } while (!allowRepeats && players.length > 2 && lastTeamComposition && JSON.stringify(teamA_ids) === JSON.stringify(lastTeamComposition));
+                lastTeamComposition = teamA_ids;
+                players.forEach(p => {
+                    p.team = teamA.some(pl => pl.id === p.id) ? 'A' : (teamB.some(pl => pl.id === p.id) ? 'B' : null);
+                });
+                renderAll();
+                setAnimationLock(false);
+            }, 500);
+        }
+        function recordRound(isAuto = false) {
+            if (!roundIsDirty || !lastScoringTeam) return;
+            const winningTeam = lastScoringTeam;
+            const losingTeam = winningTeam === 'A' ? 'B' : 'A';
+            const teamA_ids = players.filter(p => p.team === 'A').map(p => p.id).sort();
+            const teamB_ids = players.filter(p => p.team === 'B').map(p => p.id).sort();
+            if (teamA_ids.length > 0 && teamB_ids.length > 0) teamHistory.push([teamA_ids, teamB_ids].sort());
+            players.forEach(p => {
+                if (p.team === winningTeam) p.wins++;
+                else if (p.team === losingTeam) p.losses++;
+            });
+            totalRounds++;
+            roundIsDirty = false;
+            lastScoringTeam = null;
+            playSound('record');
+            showToast(isAuto ? '已自动记录本局' : '记录完成');
+            saveData();
+            updateControlsState();
+        }
 
-        // --- UI & State Updates ---
-        function updateControlsState() { const playerCount = players.length; playerCountDisp.textContent = `${playerCount} 位玩家`; addPlayerBtn.disabled = playerCount >= 8; removePlayerBtn.disabled = playerCount <= 2; const isTeamMode = gameMode === 'team'; teamUpBtn.disabled = !isTeamMode || playerCount < 2 || (playerCount > 0 && playerCount % 2 !== 0); repeatSwitchContainer.style.display = isTeamMode ? 'flex' : 'none'; const recordBtn = document.getElementById('dynamicRecordBtn'); if (recordBtn) recordBtn.disabled = !roundIsDirty; updateModeSwitchUI(); updateAllowRepeatSwitchUI(); }
-        function toggleMode() { gameMode = (gameMode === 'team' ? 'individual' : 'team'); smartClearTeams(false); saveData(); renderAll(); }
-        function updateModeSwitchUI() { modeSwitch.classList.toggle('active', gameMode === 'team'); modeLabel.textContent = gameMode === 'team' ? '组队模式' : '个人模式'; }
-        function toggleAllowRepeats() { allowRepeats = !allowRepeats; saveData(); updateAllowRepeatSwitchUI(); }
-        function updateAllowRepeatSwitchUI() { allowRepeatSwitch.classList.toggle('active', allowRepeats); allowRepeatLabel.textContent = allowRepeats ? '允许重复' : '避免重复'; }
-        function updateUIForProStatus() { const pro = isPro(); activationForm.style.display = pro ? 'none' : 'block'; activationStatus.style.display = pro ? 'block' : 'none'; sessionManagerBtn.classList.toggle('pro-feature', !pro); statsBtn.classList.toggle('pro-feature', !pro); settingsBtn.classList.toggle('pro-feature', !pro); deleteCurrentArchiveBtn.style.display = pro ? 'flex' : 'none'; }
-        function activatePro() { if (licenseKeyInput.value.trim() === MASTER_KEY) { localStorage.setItem(PRO_TOKEN_KEY, getProActivationToken(MASTER_KEY, generateDeviceFingerprint())); hideModal(settingsModal); showToast("专业版激活成功！"); initializeApp(); } else { showToast("激活码无效"); } }
-        function smartClearTeams(autoRecord = true) { if (autoRecord && roundIsDirty && lastScoringTeam) recordRound(true); players.forEach(p => p.team = null); roundIsDirty = false; lastScoringTeam = null; lastTeamComposition = null; renderAll(); }
-        function startNewRound() { showConfirmModal('开始新一局？', '这将归档当前战局数据，并清零所有玩家的当前分数。', () => { if (players.some(p => p.score !== 0) || totalRounds > 0) { gameSessions.unshift({ timestamp: Date.now(), players: JSON.parse(JSON.stringify(players)), teamHistory: [...teamHistory], totalRounds }); } players.forEach(p => { p.score = 0; p.wins = 0; p.losses = 0; p.team = null; }); teamHistory = []; totalRounds = 0; roundIsDirty = false; lastScoringTeam = null; lastTeamComposition = null; renderAll(); showToast("新的一局已开始！"); }); }
-        function setAnimationLock(locked) { [teamUpBtn, newRoundBtn, allowRepeatSwitch, modeSwitch].forEach(btn => btn.disabled = locked); if (!locked) updateControlsState(); }
-        function playSound(type) { if (masterSoundEnabled && customSounds[type]) { new Audio(customSounds[type]).play().catch(() => {}); } }
+        // --- Card Game Mode Logic (Updated) ---
+        function showCardScoreModal() {
+            cardScoreList.innerHTML = '';
+            players.forEach(player => {
+                const li = document.createElement('li');
+                // 8. 修复负数输入问题
+                li.innerHTML = `
+                    <span class="player-name-static">${player.name}</span>
+                    <input type="number" class="card-score-input" data-player-id="${player.id}" placeholder="得分" value="" inputmode="decimal">
+                `;
+                cardScoreList.appendChild(li);
+            });
+            updateZeroSumSwitchUI();
+            updateCardScoreSum();
+            showModal(cardScoreModal);
+            const firstInput = cardScoreList.querySelector('.card-score-input');
+            if (firstInput) setTimeout(() => firstInput.focus(), 100);
+        }
+        function updateCardScoreSum() {
+            const inputs = cardScoreList.querySelectorAll('.card-score-input');
+            let sum = 0;
+            inputs.forEach(input => { sum += Number(input.value) || 0; });
+            cardScoreSum.textContent = `总和: ${sum}`;
+            cardScoreSum.classList.toggle('unbalanced', zeroSumCheckEnabled && sum !== 0);
+            cardScoreConfirmBtn.disabled = zeroSumCheckEnabled && sum !== 0;
+        }
+        function handleCardScoreConfirm() {
+            const inputs = cardScoreList.querySelectorAll('.card-score-input');
+            let hasChanges = false;
+            inputs.forEach(input => {
+                const playerId = parseFloat(input.dataset.playerId);
+                const scoreChange = Number(input.value) || 0;
+                if (scoreChange !== 0) {
+                    const player = players.find(p => p.id === playerId);
+                    if (player) {
+                        player.score += scoreChange;
+                        hasChanges = true;
+                    }
+                }
+            });
+            if (hasChanges) cardScoreRounds++;
+            playSound('record');
+            renderAll(true);
+            hideModal(cardScoreModal);
+            showToast('得分已记录');
+        }
+        function toggleZeroSumCheck() {
+            zeroSumCheckEnabled = !zeroSumCheckEnabled;
+            saveData();
+            updateZeroSumSwitchUI();
+            updateCardScoreSum();
+        }
+        function updateZeroSumSwitchUI() { zeroSumSwitch.classList.toggle('active', zeroSumCheckEnabled); }
+        function toggleZeroSumDuel() {
+            zeroSumDuelEnabled = !zeroSumDuelEnabled;
+            saveData();
+            updateZeroSumDuelSwitchUI();
+        }
+        function updateZeroSumDuelSwitchUI() { zeroSumDuelSwitch.classList.toggle('active', zeroSumDuelEnabled); }
+
+        // --- Player History (Unchanged) ---
+        function showPlayerHistoryModal() { renderPlayerHistoryList(); showModal(playerHistoryModal); }
+        function renderPlayerHistoryList() {
+            playerHistoryList.innerHTML = '';
+            if (!globalSettings.playerHistory?.length) {
+                playerHistoryList.innerHTML = '<li style="text-align: center; color: var(--text-muted); padding: 20px;">暂无历史玩家</li>';
+                return;
+            }
+            globalSettings.playerHistory.forEach((name, index) => {
+                const li = document.createElement('div');
+                li.className = 'player-history-item';
+                li.innerHTML = `<span class="player-history-name">${name}</span><button class="player-history-delete" data-index="${index}">×</button>`;
+                playerHistoryList.appendChild(li);
+            });
+        }
+        function addPlayerNameToHistory() {
+            const name = newPlayerNameInput.value.trim();
+            if (!name) { showToast('请输入玩家名称'); return; }
+            if (globalSettings.playerHistory.includes(name)) { showToast('该玩家名称已存在'); return; }
+            globalSettings.playerHistory.push(name);
+            saveGlobalSettings();
+            newPlayerNameInput.value = '';
+            renderPlayerHistoryList();
+            showToast('已添加到历史');
+        }
+        function deletePlayerFromHistory(index) {
+            globalSettings.playerHistory.splice(index, 1);
+            saveGlobalSettings();
+            renderPlayerHistoryList();
+            showToast('已删除');
+        }
+        function showPlayerSelectModal(playerId) {
+            currentSelectingPlayerId = playerId;
+            playerSelectList.innerHTML = '';
+            if (!globalSettings.playerHistory?.length) {
+                playerSelectList.innerHTML = '<li style="text-align: center; color: var(--text-muted); padding: 20px;">暂无历史玩家<br><small>您可以在设置中管理历史玩家</small></li>';
+            } else {
+                globalSettings.playerHistory.forEach(name => {
+                    const li = document.createElement('div');
+                    li.className = 'player-history-item';
+                    li.style.cursor = 'pointer';
+                    li.innerHTML = `<span class="player-history-name">${name}</span>`;
+                    li.addEventListener('click', () => selectPlayerName(name));
+                    playerSelectList.appendChild(li);
+                });
+            }
+            showModal(playerSelectModal);
+        }
+        function selectPlayerName(name) {
+            if (!currentSelectingPlayerId) return;
+            const player = players.find(p => p.id === currentSelectingPlayerId);
+            if (player) {
+                const oldName = player.name;
+                player.name = name;
+                if (oldName && !oldName.startsWith('玩家 ') && !globalSettings.playerHistory.includes(oldName)) {
+                    globalSettings.playerHistory.push(oldName);
+                    saveGlobalSettings();
+                }
+                renderAll(true);
+                showToast(`已选择: ${name}`);
+            }
+            hideModal(playerSelectModal);
+            currentSelectingPlayerId = null;
+        }
+
+        // --- Session Management (Unchanged) ---
+        function showCreateSessionModal() {
+            showTextInputModal('创建新存档', '请输入新存档的名称：', `对局 ${new Date().toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`, (name) => {
+                const newId = `session_${Date.now()}`;
+                archives[newId] = getNewSessionData(name);
+                activeSessionId = newId;
+                loadSession(newId, true);
+                saveData();
+                hideModal(sessionManagerModal);
+            });
+        }
+        function loadSession(id, showToastMsg = true) {
+            if (!archives[id]) { initializeApp(); return; }
+            activeSessionId = id;
+            localStorage.setItem(ACTIVE_SESSION_ID_KEY, activeSessionId);
+            loadSessionData(archives[id]);
+            renderAll(false);
+            if (showToastMsg) showToast(`已加载存档: ${archives[id].name}`);
+        }
+        function renameSession(id) {
+            showTextInputModal('重命名存档', '请输入新的存档名称：', archives[id].name, (newName) => {
+                archives[id].name = newName;
+                saveData();
+                renderSessionManager();
+            });
+        }
+        function deleteSession(idToDelete) {
+            showConfirmModal('确认删除存档？', `此操作将永久删除存档 "${archives[idToDelete].name}" 及其所有战局历史，无法撤销。`, () => {
+                if (Object.keys(archives).length <= 1 && isPro()) { showToast('无法删除唯一的存档'); return; }
+                const deletedName = archives[idToDelete].name;
+                const wasActive = idToDelete === activeSessionId;
+                delete archives[idToDelete];
+                if (wasActive) {
+                    const remainingIds = Object.keys(archives);
+                    activeSessionId = remainingIds.length > 0 ? remainingIds[0] : null;
+                    if (activeSessionId) loadSession(activeSessionId, false);
+                    else initializeApp();
+                }
+                saveData();
+                renderSessionManager();
+                showToast(`存档 "${deletedName}" 已删除`);
+                if (statsModal.classList.contains('visible')) hideModal(statsModal);
+            }, 'danger-confirm');
+        }
+        function renderSessionManager() {
+            sessionListEl.innerHTML = '';
+            const sessionIds = Object.keys(archives);
+            if (sessionIds.length === 0) {
+                sessionListEl.innerHTML = '<li>暂无存档，请创建一个新存档。</li>';
+                return;
+            }
+            sessionIds.forEach(id => {
+                const session = archives[id];
+                const li = document.createElement('li');
+                li.className = (id === activeSessionId) ? 'active-session' : '';
+                li.dataset.sessionId = id;
+                li.innerHTML = `<span class="session-name">${session.name}</span><div class="session-actions"><button class="btn-small" data-action="rename">${RENAME_SVG}</button><button class="btn-small delete" data-action="delete">${DELETE_SVG}</button></div>`;
+                const nameSpan = li.querySelector('.session-name');
+                if (id !== activeSessionId) {
+                    nameSpan.style.cursor = 'pointer';
+                    nameSpan.addEventListener('click', () => { loadSession(id); hideModal(sessionManagerModal); });
+                }
+                sessionListEl.appendChild(li);
+            });
+        }
+
+        // --- UI & State Updates (Heavily Updated) ---
+        function updateMainControls() {
+            if (viewMode === 'duel') {
+                mainActionBtn.textContent = '随机组队';
+                mainActionBtn.onclick = smartTeamUp;
+            } else { // card mode
+                mainActionBtn.textContent = '记一笔';
+                mainActionBtn.onclick = showCardScoreModal;
+            }
+        }
+        function updateControlsState() {
+            const playerCount = players.length;
+            playerCountDisp.textContent = `${playerCount} 位玩家`;
+            addPlayerBtn.disabled = playerCount >= 8;
+            removePlayerBtn.disabled = playerCount <= 2;
+            mainActionBtn.disabled = (viewMode === 'duel') && (playerCount < 2 || (playerCount > 0 && playerCount % 2 !== 0));
+            const recordBtn = document.getElementById('dynamicRecordBtn');
+            if (recordBtn) recordBtn.disabled = !roundIsDirty;
+            updateModeSelectorUI();
+            updateAllowRepeatSwitchUI();
+            updateZeroSumDuelSwitchUI();
+        }
+        function setViewMode(newMode) {
+            if (newMode === 'card' && !isPro()) { showModal(upgradeModal); return; }
+            smartClearTeams(false);
+            viewMode = newMode;
+            statsViewMode = newMode; // Sync stats view mode
+            saveData();
+            renderAll();
+        }
+        function updateModeSelectorUI() {
+            modeSelectorBtn.innerHTML = viewMode === 'duel' ? '模式：对决' : '模式：牌局';
+            modeDropdown.querySelectorAll('.mode-dropdown-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.mode === viewMode);
+            });
+            modeDropdown.querySelector('[data-mode="card"]').classList.toggle('pro-feature', !isPro());
+            
+            // Stats mode selector UI
+            statsModeSelectorBtn.innerHTML = statsViewMode === 'duel' ? '查看：对决数据' : '查看：牌局数据';
+            statsModeDropdown.querySelectorAll('.mode-dropdown-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.mode === statsViewMode);
+            });
+        }
+        function toggleAllowRepeats() {
+            allowRepeats = !allowRepeats;
+            saveData();
+            updateAllowRepeatSwitchUI();
+        }
+        function updateAllowRepeatSwitchUI() {
+            allowRepeatSwitch.classList.toggle('active', allowRepeats);
+            allowRepeatLabel.innerHTML = allowRepeats ? '允许重复组队 <small>(随机性更高)</small>' : '避免重复组队 <small>(更公平)</small>';
+        }
+        function updateUIForProStatus() {
+            const pro = isPro();
+            activationForm.style.display = pro ? 'none' : 'block';
+            activationStatus.style.display = pro ? 'block' : 'none';
+            sessionManagerBtn.classList.toggle('pro-feature', !pro);
+            settingsBtn.classList.toggle('pro-feature', !pro);
+            document.getElementById('deleteCurrentArchiveBtn').style.display = pro ? 'flex' : 'none';
+            updateModeSelectorUI();
+            renderAll(false);
+        }
+        function activatePro() {
+            if (licenseKeyInput.value.trim() === MASTER_KEY) {
+                localStorage.setItem(PRO_TOKEN_KEY, getProActivationToken(MASTER_KEY, generateDeviceFingerprint()));
+                hideModal(settingsModal);
+                showToast("专业版激活成功！");
+                initializeApp();
+            } else {
+                showToast("激活码无效");
+            }
+        }
+        function smartClearTeams(autoRecord = true) {
+            if (autoRecord && roundIsDirty && lastScoringTeam) recordRound(true);
+            players.forEach(p => p.team = null);
+            roundIsDirty = false;
+            lastScoringTeam = null;
+            lastTeamComposition = null;
+            if (viewMode === 'duel') renderAll();
+        }
+        function startNewRound() {
+            showConfirmModal('开始新一局？', '这将归档当前战局数据，并清零所有玩家的当前分数。', () => {
+                if (players.some(p => p.score !== 0) || totalRounds > 0 || cardScoreRounds > 0) {
+                    gameSessions.unshift({
+                        timestamp: Date.now(), players: JSON.parse(JSON.stringify(players)),
+                        teamHistory: [...teamHistory], totalRounds, cardScoreRounds
+                    });
+                }
+                players.forEach(p => {
+                    p.score = 0; p.wins = 0; p.losses = 0; p.team = null;
+                });
+                teamHistory = []; totalRounds = 0; cardScoreRounds = 0;
+                roundIsDirty = false; lastScoringTeam = null; lastTeamComposition = null;
+                renderAll();
+                showToast("新的一局已开始！");
+            });
+        }
+        function setAnimationLock(locked) {
+            mainActionBtn.disabled = locked;
+            newRoundBtn.disabled = locked;
+            allowRepeatSwitch.disabled = locked;
+            if (!locked) updateControlsState();
+        }
+
+        // --- Generic Functions (Unchanged) ---
+        function playSound(type) { if (globalSettings.masterSoundEnabled && globalSettings.customSounds[type]) { new Audio(globalSettings.customSounds[type]).play().catch(() => {}); } }
         function showToast(message) { toastContainer.textContent = message; toastContainer.classList.add('show'); setTimeout(() => toastContainer.classList.remove('show'), 2500); }
         function showModal(modal) { modal.classList.add('visible'); }
         function hideModal(modal) { modal.classList.remove('visible'); }
-        function showTextInputModal(title, prompt, initialValue, onConfirm) { textInputTitle.textContent = title; textInputPrompt.textContent = prompt; textInputField.value = initialValue; textInputAction = onConfirm; showModal(textInputModal); textInputField.focus(); textInputField.select(); }
-        function handleTextInputConfirm() { const value = textInputField.value.trim(); if (value && typeof textInputAction === 'function') { textInputAction(value); } else if (!value) { showToast("输入内容不能为空！"); return; } hideModal(textInputModal); textInputAction = null; }
-        function showConfirmModal(title, text, onConfirm, confirmClass = 'primary') { confirmModalTitle.textContent = title; confirmModalText.innerHTML = text; confirmAction = onConfirm; confirmModalConfirmBtn.className = `btn ${confirmClass}`; showModal(confirmModal); }
+        function showTextInputModal(title, prompt, initialValue, onConfirm) {
+            textInputTitle.textContent = title; textInputPrompt.textContent = prompt;
+            textInputField.value = initialValue; textInputAction = onConfirm;
+            showModal(textInputModal); textInputField.focus(); textInputField.select();
+        }
+        function handleTextInputConfirm() {
+            const value = textInputField.value.trim();
+            if (value && typeof textInputAction === 'function') { textInputAction(value); }
+            else if (!value) { showToast("输入内容不能为空！"); return; }
+            hideModal(textInputModal); textInputAction = null;
+        }
+        function showConfirmModal(title, text, onConfirm, confirmClass = 'primary') {
+            confirmModalTitle.textContent = title; confirmModalText.innerHTML = text;
+            confirmAction = onConfirm;
+            document.getElementById('confirmModalConfirmBtn').className = `btn ${confirmClass}`;
+            showModal(confirmModal);
+        }
         function handleConfirm() { if (typeof confirmAction === 'function') confirmAction(); hideModal(confirmModal); confirmAction = null; }
 
-        // --- Stats Rendering Logic ---
-        function showStatsModal() { gameSessionView.style.display = 'block'; comprehensiveStatsView.style.display = 'none'; populateSessionSelector(); const currentSessionData = { players: JSON.parse(JSON.stringify(players)), teamHistory: [...teamHistory], totalRounds }; renderSpecificStatsView(currentSessionData, 'current'); showModal(statsModal); }
-        function populateSessionSelector() { gameSessionSelector.innerHTML = '<option value="current">当前战局</option>'; gameSessions.forEach((session, index) => { const date = new Date(session.timestamp).toLocaleString('zh-CN', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'}); gameSessionSelector.innerHTML += `<option value="${index}">历史战局: ${date}</option>`; }); }
-        function renderSpecificStatsView(data, viewType) { const prefix = viewType === 'comprehensive' ? 'comprehensive-' : ''; const { players: statPlayers, teamHistory: statTeamHistory, totalRounds: statTotalRounds } = data; document.getElementById(`${prefix}generalStatsList`).innerHTML = `<li><span class="stat-name">总回合数 (组队)</span><span class="stat-value">${statTotalRounds}</span></li>`; const rankList = document.getElementById(`${prefix}rankList`); rankList.innerHTML = ''; [...statPlayers].sort((a, b) => b.score - a.score).forEach((player, index) => { const li = document.createElement('li'); if (index === 0 && player.score > 0) li.classList.add('rank-1-item'); const totalGames = player.wins + player.losses, winRate = totalGames > 0 ? Math.round((player.wins / totalGames) * 100) : 0; li.innerHTML = `<span class="rank-name">${index + 1}. ${player.name}</span><span class="rank-score">${player.score}分<small>${player.wins}胜 ${player.losses}负 (${winRate}%)</small></span>`; rankList.appendChild(li); }); const teamList = document.getElementById(`${prefix}teamStatsList`); teamList.innerHTML = ''; const pairCounts = {}; statPlayers.forEach((p1, i) => { for (let j = i + 1; j < statPlayers.length; j++) { const key = [p1.id, statPlayers[j].id].sort().join('-'); pairCounts[key] = 0; } }); statTeamHistory.forEach(teams => teams.forEach(team => { if(team.length > 1) { for(let i = 0; i < team.length; i++) for(let j = i + 1; j < team.length; j++) { const key = [team[i], team[j]].sort().join('-'); if (key in pairCounts) pairCounts[key]++; } } })); const sortedPairs = Object.entries(pairCounts).sort(([,a],[,b]) => b-a); if(sortedPairs.length === 0 || sortedPairs.every(p => p[1] === 0)) { teamList.innerHTML = '<li>暂无组队数据</li>'; return; } sortedPairs.forEach(([key, count]) => { if(count === 0) return; const ids = key.split('-').map(Number), p1 = statPlayers.find(p => p.id === ids[0]), p2 = statPlayers.find(p => p.id === ids[1]); if (!p1 || !p2) return; const percentage = statTotalRounds > 0 ? ((count / statTotalRounds) * 100).toFixed(0) : 0; const li = document.createElement('li'); li.innerHTML = `<span class="stat-name">${p1.name} & ${p2.name}</span><span class="stat-value">${count}次 (${percentage}%)</span>`; teamList.appendChild(li); }); }
-        function renderComprehensiveStats() { const currentSessionData = { players: JSON.parse(JSON.stringify(players)), teamHistory: [...teamHistory], totalRounds }; const allData = [ currentSessionData, ...gameSessions ]; const aggregatedStats = { players: [], teamHistory: [], totalRounds: 0 }; const playerMap = new Map(); allData.forEach(sessionData => { aggregatedStats.totalRounds += sessionData.totalRounds; aggregatedStats.teamHistory.push(...sessionData.teamHistory); sessionData.players.forEach(p => { if (!playerMap.has(p.id)) playerMap.set(p.id, { id: p.id, name: p.name, wins: 0, losses: 0, score: 0 }); const storedPlayer = playerMap.get(p.id); storedPlayer.wins += p.wins; storedPlayer.losses += p.losses; storedPlayer.score += p.score; storedPlayer.name = p.name; }); }); aggregatedStats.players = Array.from(playerMap.values()); renderSpecificStatsView(aggregatedStats, 'comprehensive'); gameSessionView.style.display = 'none'; comprehensiveStatsView.style.display = 'block'; }
+        // --- Stats Logic (Heavily Updated for Mode Filtering) ---
+        function showStatsModal() {
+            gameSessionView.style.display = 'block';
+            comprehensiveStatsView.style.display = 'none';
+            populateSessionSelector();
+            updateStatsView();
+            showModal(statsModal);
+        }
+        function populateSessionSelector() {
+            gameSessionSelector.innerHTML = '<option value="current">当前战局</option>';
+            gameSessions.forEach((session, index) => {
+                const date = new Date(session.timestamp).toLocaleString('zh-CN', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'});
+                gameSessionSelector.innerHTML += `<option value="${index}">历史战局: ${date}</option>`;
+            });
+        }
+        function updateStatsView() {
+            const selectedSession = gameSessionSelector.value;
+            let data;
+            if (selectedSession === 'current') {
+                data = {
+                    players: JSON.parse(JSON.stringify(players)),
+                    teamHistory: [...teamHistory], totalRounds, cardScoreRounds
+                };
+            } else {
+                data = gameSessions[parseInt(selectedSession)];
+            }
+            renderSpecificStatsView(data, 'game-session', statsViewMode);
+            updateModeSelectorUI();
+        }
+        function renderSpecificStatsView(data, viewType, modeFilter) {
+            const prefix = viewType === 'comprehensive' ? 'comprehensive-' : '';
+            const { players: statPlayers, teamHistory: statTeamHistory = [], totalRounds: statTotalRounds = 0, cardScoreRounds: statCardScoreRounds = 0 } = data;
+            
+            const generalStatsList = document.getElementById(`${prefix}generalStatsList`);
+            const rankList = document.getElementById(`${prefix}rankList`);
+            const currentTeamStatsContainer = document.getElementById(prefix + 'teamStatsContainer');
+
+            if (modeFilter === 'duel') {
+                generalStatsList.innerHTML = `<li><span class="stat-name">总回合数 (组队)</span><span class="stat-value">${statTotalRounds}</span></li>`;
+                currentTeamStatsContainer.style.display = 'block';
+            } else { // card mode
+                generalStatsList.innerHTML = `<li><span class="stat-name">总回合数 (记账)</span><span class="stat-value">${statCardScoreRounds}</span></li>`;
+                currentTeamStatsContainer.style.display = 'none'; // Hide team stats for card mode
+            }
+
+            rankList.innerHTML = '';
+            [...statPlayers].sort((a, b) => b.score - a.score).forEach((player, index) => {
+                const li = document.createElement('li');
+                if (index === 0 && player.score > 0) li.classList.add('rank-1-item');
+                const totalGames = player.wins + player.losses;
+                const winRate = totalGames > 0 ? Math.round((player.wins / totalGames) * 100) : 0;
+                const winLossText = modeFilter === 'duel' ? `<small>${player.wins}胜 ${player.losses}负 (${winRate}%)</small>` : '';
+                li.innerHTML = `<span class="rank-name">${index + 1}. ${player.name}</span><span class="rank-score">${player.score}分${winLossText}</span>`;
+                rankList.appendChild(li);
+            });
+
+            // Always calculate team stats but only show for duel mode
+            const teamList = document.getElementById(`${prefix}teamStatsList`);
+            teamList.innerHTML = '';
+            if (statTotalRounds > 0 && statTeamHistory.length > 0) {
+                 const pairCounts = {};
+                statPlayers.forEach((p1, i) => {
+                    for (let j = i + 1; j < statPlayers.length; j++) {
+                        const key = [p1.id, statPlayers[j].id].sort().join('-');
+                        pairCounts[key] = { count: 0 };
+                    }
+                });
+                statTeamHistory.forEach(teams => teams.forEach(team => {
+                    if(team.length > 1) {
+                        for(let i = 0; i < team.length; i++) for(let j = i + 1; j < team.length; j++) {
+                            const key = [team[i], team[j]].sort().join('-');
+                            if (key in pairCounts) pairCounts[key].count++;
+                        }
+                    }
+                }));
+
+                const sortedPairs = Object.entries(pairCounts).sort(([,a],[,b]) => b.count - a.count);
+                if(sortedPairs.length === 0 || sortedPairs.every(p => p[1].count === 0)) {
+                    teamList.innerHTML = '<li>暂无组队数据</li>';
+                } else {
+                    sortedPairs.forEach(([key, {count}]) => {
+                        if(count === 0) return;
+                        const ids = key.split('-').map(Number);
+                        const p1 = statPlayers.find(p => p.id === ids[0]);
+                        const p2 = statPlayers.find(p => p.id === ids[1]);
+                        if (!p1 || !p2) return;
+                        const percentage = statTotalRounds > 0 ? ((count / statTotalRounds) * 100).toFixed(0) : 0;
+                        const li = document.createElement('li');
+                        li.innerHTML = `<span class="stat-name">${p1.name} & ${p2.name}</span><span class="stat-value">${count}次 (${percentage}%)</span>`;
+                        teamList.appendChild(li);
+                    });
+                }
+            } else {
+                teamList.innerHTML = '<li>暂无组队数据</li>';
+            }
+        }
+        function renderComprehensiveStats() {
+            const currentSessionData = {
+                players: JSON.parse(JSON.stringify(players)), teamHistory: [...teamHistory], totalRounds, cardScoreRounds
+            };
+            const allData = [ currentSessionData, ...gameSessions ];
+            const aggregatedStats = { players: [], teamHistory: [], totalRounds: 0, cardScoreRounds: 0 };
+            const playerMap = new Map();
+            allData.forEach(sessionData => {
+                aggregatedStats.totalRounds += sessionData.totalRounds || 0;
+                aggregatedStats.cardScoreRounds += sessionData.cardScoreRounds || 0;
+                aggregatedStats.teamHistory.push(...(sessionData.teamHistory || []));
+                sessionData.players.forEach(p => {
+                    if (!playerMap.has(p.id)) playerMap.set(p.id, { id: p.id, name: p.name, wins: 0, losses: 0, score: 0 });
+                    const storedPlayer = playerMap.get(p.id);
+                    storedPlayer.wins += p.wins; storedPlayer.losses += p.losses;
+                    storedPlayer.score += p.score; storedPlayer.name = p.name;
+                });
+            });
+            aggregatedStats.players = Array.from(playerMap.values());
+            renderSpecificStatsView(aggregatedStats, 'comprehensive', statsViewMode);
+            gameSessionView.style.display = 'none';
+            comprehensiveStatsView.style.display = 'block';
+        }
         
-        function showSettingsModal() { titleEditorList.innerHTML = ''; rankTitles.forEach((title, index) => { titleEditorList.innerHTML += `<li><span class="setting-label">第 ${index + 1} 名</span><input type="text" value="${title}" data-index="${index}"></li>`; }); soundSettingsList.innerHTML = ''; for (const type in SOUND_EVENTS) { const status = customSounds[type] ? '已设置' : '未设置'; soundSettingsList.innerHTML += `<li class="sound-setting" data-sound-type="${type}"><span class="setting-label">${SOUND_EVENTS[type]}</span><label class="btn btn-small">上传<input type="file" accept=".mp3,.wav,.m4a" style="display:none;"></label><button class="btn btn-small" data-action="play">试听</button><button class="btn btn-small danger" data-action="clear">清除</button><span class="status-text">${status}</span></li>`; } updateMasterSoundSwitchUI(); settingsModal.classList.add('visible'); }
-        function saveSettings() { titleEditorList.querySelectorAll('input').forEach(input => { rankTitles[parseInt(input.dataset.index)] = input.value.trim() || DEFAULT_RANK_TITLES[parseInt(input.dataset.index)]; }); saveData(); renderAll(false); hideModal(settingsModal); showToast('设置已保存'); }
-        function restoreDefaults() { rankTitles = [...DEFAULT_RANK_TITLES]; customSounds = { scoreUp: null, teamUp: null, record: null }; masterSoundEnabled = true; saveData(); showSettingsModal(); }
-        function handleSoundUpload(e) { const file = e.target.files[0], type = e.target.closest('li').dataset.soundType; if (!file || !type) return; const reader = new FileReader(); reader.onload = (event) => { customSounds[type] = event.target.result; saveData(); e.target.closest('li').querySelector('.status-text').textContent = '已设置'; showToast(`${SOUND_EVENTS[type]} 音效已更新`); }; reader.onerror = () => showToast('文件读取失败'); reader.readAsDataURL(file); }
-        function toggleMasterSound() { masterSoundEnabled = !masterSoundEnabled; updateMasterSoundSwitchUI(); saveData(); }
-        function updateMasterSoundSwitchUI() { masterSoundSwitch.classList.toggle('active', masterSoundEnabled); }
+        // --- Settings Logic ---
+        function showSettingsModal() {
+            titleEditorList.innerHTML = '';
+            rankTitles.forEach((title, index) => {
+                titleEditorList.innerHTML += `<li><span class="setting-label">第 ${index + 1} 名</span><input type="text" value="${title}" data-index="${index}"></li>`;
+            });
+            soundSettingsList.innerHTML = '';
+            for (const type in SOUND_EVENTS) {
+                const status = globalSettings.customSounds[type] ? '已设置' : '未设置';
+                soundSettingsList.innerHTML += `<li class="sound-setting" data-sound-type="${type}"><span class="setting-label">${SOUND_EVENTS[type]}</span><label class="btn btn-small">上传<input type="file" accept=".mp3,.wav,.m4a" style="display:none;"></label><button class="btn btn-small" data-action="play">试听</button><button class="btn btn-small danger" data-action="clear">清除</button><span class="status-text">${status}</span></li>`;
+            }
+            updateMasterSoundSwitchUI();
+            settingsModal.classList.add('visible');
+        }
+        function saveSettings() {
+            titleEditorList.querySelectorAll('input').forEach(input => {
+                rankTitles[parseInt(input.dataset.index)] = input.value.trim() || DEFAULT_RANK_TITLES[parseInt(input.dataset.index)];
+            });
+            saveData();
+            saveGlobalSettings();
+            renderAll(false);
+            hideModal(settingsModal);
+            showToast('设置已保存');
+        }
+        function restoreDefaults() {
+            rankTitles = [...DEFAULT_RANK_TITLES];
+            globalSettings.customSounds = { scoreUp: null, teamUp: null, record: null };
+            globalSettings.masterSoundEnabled = true;
+            zeroSumCheckEnabled = true; zeroSumDuelEnabled = true;
+            saveData(); saveGlobalSettings();
+            showSettingsModal();
+        }
+        function handleSoundUpload(e) {
+            const file = e.target.files[0];
+            const type = e.target.closest('li').dataset.soundType;
+            if (!file || !type) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                globalSettings.customSounds[type] = event.target.result;
+                saveGlobalSettings();
+                e.target.closest('li').querySelector('.status-text').textContent = '已设置';
+                showToast(`${SOUND_EVENTS[type]} 音效已更新`);
+            };
+            reader.onerror = () => showToast('文件读取失败');
+            reader.readAsDataURL(file);
+        }
+        function toggleMasterSound() {
+            globalSettings.masterSoundEnabled = !globalSettings.masterSoundEnabled;
+            updateMasterSoundSwitchUI(); saveGlobalSettings();
+        }
+        function updateMasterSoundSwitchUI() { masterSoundSwitch.classList.toggle('active', globalSettings.masterSoundEnabled); }
 
         // --- Event Listeners ---
-        addPlayerBtn.addEventListener('click', () => createPlayer()); removePlayerBtn.addEventListener('click', removePlayer); teamUpBtn.addEventListener('click', smartTeamUp); modeSwitch.addEventListener('click', toggleMode); allowRepeatSwitch.addEventListener('click', toggleAllowRepeats); newRoundBtn.addEventListener('click', startNewRound);
+        addPlayerBtn.addEventListener('click', () => createPlayer());
+        removePlayerBtn.addEventListener('click', removePlayer);
+        newRoundBtn.addEventListener('click', startNewRound);
+        modeSelectorBtn.addEventListener('click', () => modeDropdown.classList.toggle('visible'));
+        modeDropdown.addEventListener('click', e => {
+            const item = e.target.closest('.mode-dropdown-item');
+            if (item) {
+                setViewMode(item.dataset.mode);
+                modeDropdown.classList.remove('visible');
+            }
+        });
+        document.addEventListener('click', e => {
+            if (!modeSelectorBtn.contains(e.target) && !modeDropdown.contains(e.target)) {
+                modeDropdown.classList.remove('visible');
+            }
+            if (!statsModeSelectorBtn.contains(e.target) && !statsModeDropdown.contains(e.target)) {
+                statsModeDropdown.classList.remove('visible');
+            }
+        });
+        allowRepeatSwitch.addEventListener('click', toggleAllowRepeats);
+        zeroSumDuelSwitch.addEventListener('click', toggleZeroSumDuel);
         statsBtn.addEventListener('click', () => isPro() ? showStatsModal() : showModal(upgradeModal));
-        deleteCurrentArchiveBtn.addEventListener('click', () => deleteSession(activeSessionId));
+
+        document.getElementById('deleteCurrentArchiveBtn').addEventListener('click', () => deleteSession(activeSessionId));
         settingsBtn.addEventListener('click', () => isPro() ? showSettingsModal() : showModal(upgradeModal));
         helpBtn.addEventListener('click', () => showModal(helpModal));
         sessionManagerBtn.addEventListener('click', () => isPro() ? (renderSessionManager(), showModal(sessionManagerModal)) : showModal(upgradeModal));
         createNewSessionBtn.addEventListener('click', showCreateSessionModal);
-        sessionListEl.addEventListener('click', e => { const btn = e.target.closest('button'); if (!btn) return; const action = btn.dataset.action, sessionId = btn.closest('li').dataset.sessionId; if (action === 'rename') renameSession(sessionId); else if (action === 'delete') deleteSession(sessionId); });
-        
-        [statsModal, settingsModal, upgradeModal, sessionManagerModal, helpModal, textInputModal, confirmModal].forEach(modal => { modal.addEventListener('click', e => { if (e.target === modal) hideModal(modal); }); modal.querySelector('.modal-close').addEventListener('click', () => hideModal(modal)); });
-        textInputConfirmBtn.addEventListener('click', handleTextInputConfirm); textInputField.addEventListener('keydown', e => { if (e.key === 'Enter') handleTextInputConfirm(); }); textInputCancelBtn.addEventListener('click', () => hideModal(textInputModal));
-        confirmModalConfirmBtn.addEventListener('click', handleConfirm); confirmModalCancelBtn.addEventListener('click', () => hideModal(confirmModal));
-        
-        // Stats modal listeners
-        gameSessionSelector.addEventListener('change', e => { const value = e.target.value; if (value === 'current') { const currentSessionData = { players: JSON.parse(JSON.stringify(players)), teamHistory: [...teamHistory], totalRounds }; renderSpecificStatsView(currentSessionData, 'game-session'); } else { renderSpecificStatsView(gameSessions[parseInt(value)], 'game-session'); } });
-        showComprehensiveBtn.addEventListener('click', renderComprehensiveStats);
-        showGameSessionBtn.addEventListener('click', () => { comprehensiveStatsView.style.display = 'none'; gameSessionView.style.display = 'block'; });
+        managePlayerHistoryBtn.addEventListener('click', showPlayerHistoryModal);
 
-        saveSettingsBtn.addEventListener('click', saveSettings); restoreDefaultsBtn.addEventListener('click', restoreDefaults); masterSoundSwitch.addEventListener('click', toggleMasterSound);
+        sessionListEl.addEventListener('click', e => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const sessionId = btn.closest('li').dataset.sessionId;
+            if (action === 'rename') renameSession(sessionId);
+            else if (action === 'delete') deleteSession(sessionId);
+        });
+        
+        [statsModal, settingsModal, upgradeModal, sessionManagerModal, helpModal, textInputModal, confirmModal, cardScoreModal, playerHistoryModal, playerSelectModal].forEach(modal => {
+            modal.addEventListener('click', e => { if (e.target === modal) hideModal(modal); });
+            modal.querySelector('.modal-close').addEventListener('click', () => hideModal(modal));
+        });
+
+        textInputConfirmBtn.addEventListener('click', handleTextInputConfirm);
+        textInputField.addEventListener('keydown', e => { if (e.key === 'Enter') handleTextInputConfirm(); });
+        textInputCancelBtn.addEventListener('click', () => hideModal(textInputModal));
+        confirmModalConfirmBtn.addEventListener('click', handleConfirm);
+        confirmModalCancelBtn.addEventListener('click', () => hideModal(confirmModal));
+        
+        cardScoreConfirmBtn.addEventListener('click', handleCardScoreConfirm);
+        cardScoreCancelBtn.addEventListener('click', () => hideModal(cardScoreModal));
+        cardScoreList.addEventListener('input', e => { if (e.target.classList.contains('card-score-input')) updateCardScoreSum(); });
+        zeroSumSwitch.addEventListener('click', toggleZeroSumCheck);
+
+        playerHistoryList.addEventListener('click', e => {
+            if (e.target.classList.contains('player-history-delete')) {
+                const index = parseInt(e.target.dataset.index);
+                deletePlayerFromHistory(index);
+            }
+        });
+        addPlayerNameBtn.addEventListener('click', addPlayerNameToHistory);
+        newPlayerNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addPlayerNameToHistory(); });
+
+        statsModeSelectorBtn.addEventListener('click', () => statsModeDropdown.classList.toggle('visible'));
+        statsModeDropdown.addEventListener('click', e => {
+            const item = e.target.closest('.mode-dropdown-item');
+            if(item) {
+                statsViewMode = item.dataset.mode;
+                updateStatsView();
+                if(comprehensiveStatsView.style.display === 'block') {
+                    renderComprehensiveStats();
+                }
+                statsModeDropdown.classList.remove('visible');
+            }
+        });
+        gameSessionSelector.addEventListener('change', updateStatsView);
+        showComprehensiveBtn.addEventListener('click', renderComprehensiveStats);
+        showGameSessionBtn.addEventListener('click', () => {
+            comprehensiveStatsView.style.display = 'none';
+            gameSessionView.style.display = 'block';
+        });
+
+        saveSettingsBtn.addEventListener('click', saveSettings);
+        restoreDefaultsBtn.addEventListener('click', restoreDefaults);
+        masterSoundSwitch.addEventListener('click', toggleMasterSound);
         soundSettingsList.addEventListener('change', e => { if (e.target.type === 'file') handleSoundUpload(e); });
-        soundSettingsList.addEventListener('click', e => { const target = e.target.closest('button'); if (!target) return; const type = target.closest('li').dataset.soundType; if (target.dataset.action === 'play') playSound(type); if (target.dataset.action === 'clear') { customSounds[type] = null; saveData(); target.closest('li').querySelector('.status-text').textContent = '未设置'; } });
-        playerListEl.addEventListener('click', e => { const actionTarget = e.target.closest('[data-action]'); if (e.target.id === 'dynamicRecordBtn') { recordRound(); return; } if (!actionTarget) return; const card = e.target.closest('.player-card'), playerId = parseFloat(card.dataset.playerId), action = actionTarget.dataset.action; if (action === 'toggle-nemesis') { const player = players.find(p => p.id === playerId); if (!player.isNemesis && players.filter(p => p.isNemesis).length >= 2) { showToast('最多只能指定两名宿敌！'); return; } player.isNemesis = !player.isNemesis; renderAll(); } else if (action === 'plus' || action === 'minus') { handleScoreChange(playerId, action === 'plus' ? 1 : -1); } });
-        playerListEl.addEventListener('blur', e => { if (e.target.classList.contains('player-name')) { const card = e.target.closest('.player-card'), playerId = parseFloat(card.dataset.playerId), player = players.find(p => p.id === playerId), newName = e.target.textContent.trim(); if (player && newName && player.name !== newName) { player.name = newName; saveData(); } else if (!newName) { e.target.textContent = player.name; } } }, true);
-        activateBtn.addEventListener('click', activatePro); goToPurchaseBtn.addEventListener('click', () => window.open(PURCHASE_LINK, '_blank')); openActivationLink.addEventListener('click', () => { hideModal(upgradeModal); showModal(settingsModal); });
+        soundSettingsList.addEventListener('click', e => {
+            const target = e.target.closest('button');
+            if (!target) return;
+            const type = target.closest('li').dataset.soundType;
+            if (target.dataset.action === 'play') playSound(type);
+            if (target.dataset.action === 'clear') {
+                globalSettings.customSounds[type] = null;
+                saveGlobalSettings();
+                target.closest('li').querySelector('.status-text').textContent = '未设置';
+            }
+        });
+
+        playerListEl.addEventListener('click', e => {
+            const actionTarget = e.target.closest('[data-action]');
+            if (e.target.id === 'dynamicRecordBtn') { recordRound(); return; }
+            if (!actionTarget) return;
+            const card = e.target.closest('.player-card');
+            const playerId = parseFloat(card.dataset.playerId);
+            const action = actionTarget.dataset.action;
+            if (action === 'toggle-nemesis') {
+                const player = players.find(p => p.id === playerId);
+                if (!player.isNemesis && players.filter(p => p.isNemesis).length >= 2) { showToast('最多只能指定两名宿敌！'); return; }
+                player.isNemesis = !player.isNemesis;
+                renderAll();
+            } else if (action === 'plus' || action === 'minus') {
+                handleScoreChange(playerId, action === 'plus' ? 1 : -1);
+            } else if (action === 'select-name') {
+                showPlayerSelectModal(playerId);
+            }
+        });
+        
+        // 6. 换人按钮条件显示逻辑
+        playerListEl.addEventListener('focusin', e => {
+            if (e.target.classList.contains('player-name')) {
+                e.target.closest('.player-name-container').classList.add('focused');
+            }
+        });
+        playerListEl.addEventListener('focusout', e => {
+            if (e.target.classList.contains('player-name')) {
+                 setTimeout(() => { // 加一个短暂延迟，避免点击换人按钮时立即隐藏
+                    e.target.closest('.player-name-container').classList.remove('focused');
+                 }, 150);
+            }
+        });
+
+        playerListEl.addEventListener('blur', e => {
+            if (e.target.classList.contains('player-name')) {
+                const card = e.target.closest('.player-card');
+                const playerId = parseFloat(card.dataset.playerId);
+                const player = players.find(p => p.id === playerId);
+                const newName = e.target.textContent.trim();
+                if (player && newName && player.name !== newName) {
+                    const oldName = player.name;
+                    if (oldName && !oldName.startsWith('玩家 ') && !globalSettings.playerHistory.includes(oldName)) {
+                        globalSettings.playerHistory.push(oldName);
+                        saveGlobalSettings();
+                    }
+                    player.name = newName;
+                    if (!newName.startsWith('玩家 ') && !globalSettings.playerHistory.includes(newName)) {
+                        globalSettings.playerHistory.push(newName);
+                        saveGlobalSettings();
+                    }
+                    saveData();
+                } else if (!newName) {
+                    e.target.textContent = player.name;
+                }
+            }
+        }, true);
+
+        activateBtn.addEventListener('click', activatePro);
+        goToPurchaseBtn.addEventListener('click', () => window.open(PURCHASE_LINK, '_blank'));
+        openActivationLink.addEventListener('click', () => {
+            hideModal(upgradeModal);
+            showModal(settingsModal);
+        });
         
         initializeApp();
     });
